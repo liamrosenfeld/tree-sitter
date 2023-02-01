@@ -2,21 +2,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 
-#[cfg(feature = "bindgen")]
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-
-#[cfg(not(feature = "bindgen"))]
-include!("./bindings.rs");
-
-#[cfg(unix)]
-extern "C" {
-    pub(crate) fn _ts_dup(fd: std::os::raw::c_int) -> std::os::raw::c_int;
-}
-
-#[cfg(windows)]
-extern "C" {
-    pub(crate) fn _ts_dup(handle: *mut std::os::raw::c_void) -> std::os::raw::c_int;
-}
+pub use crate::core::*;
 
 use std::{marker::PhantomData, mem::ManuallyDrop, ptr::NonNull, str};
 

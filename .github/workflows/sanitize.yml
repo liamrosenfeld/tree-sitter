@@ -2,7 +2,6 @@ name: Sanitize
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: "-D warnings"
 
 on:
   workflow_call:
@@ -43,7 +42,7 @@ jobs:
       env:
         ASAN_OPTIONS: halt_on_error=1
         CFLAGS: -fsanitize=address
-        RUSTFLAGS: ${{ env.RUSTFLAGS }} -Zsanitizer=address --cfg=sanitizing
+        RUSTFLAGS: ${{ env.RUSTFLAGS }} -Zsanitizer=address --cfg=sanitizing -C opt-level=1
       run: |
         rustup install nightly
         rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu

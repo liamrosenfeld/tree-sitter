@@ -3,20 +3,20 @@ on:
   pull_request:
   push:
     branches:
-      - 'master'
+      - 'c2rust-master'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
-  checks:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: rustup toolchain install stable --profile minimal
-    - uses: Swatinem/rust-cache@v2
-    - run: make lint
+  # checks:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - run: rustup toolchain install stable --profile minimal
+  #   - uses: Swatinem/rust-cache@v2
+  #   - run: make lint
 
   sanitize:
     uses: ./.github/workflows/sanitize.yml

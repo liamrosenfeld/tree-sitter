@@ -1,4 +1,6 @@
 #![doc = include_str!("./README.md")]
+mod core_wrapper;
+pub use core_wrapper::core;
 
 pub mod ffi;
 mod util;
@@ -930,7 +932,7 @@ impl Tree {
                 .copied()
                 .map(std::convert::Into::into)
                 .collect();
-            (FREE_FN)(ptr.cast::<c_void>());
+            ffi::ts_free(ptr.cast::<c_void>());
             result
         }
     }
@@ -1416,7 +1418,7 @@ impl<'tree> Node<'tree> {
             .to_str()
             .unwrap()
             .to_string();
-        unsafe { (FREE_FN)(c_string.cast::<c_void>()) };
+        unsafe { ffi::ts_free(c_string.cast::<c_void>()) };
         result
     }
 
@@ -3010,12 +3012,6 @@ pub fn wasm_stdlib_symbols() -> impl Iterator<Item = &'static str> {
         .map(|s| s.trim_matches(|c| c == '"' || c == ','))
 }
 
-extern "C" {
-    fn free(ptr: *mut c_void);
-}
-
-static mut FREE_FN: unsafe extern "C" fn(ptr: *mut c_void) = free;
-
 /// Sets the memory allocation functions that the core library should use.
 ///
 /// # Safety
@@ -3028,7 +3024,6 @@ pub unsafe fn set_allocator(
     new_realloc: Option<unsafe extern "C" fn(*mut c_void, usize) -> *mut c_void>,
     new_free: Option<unsafe extern "C" fn(*mut c_void)>,
 ) {
-    FREE_FN = new_free.unwrap_or(free);
     ffi::ts_set_allocator(new_malloc, new_calloc, new_realloc, new_free);
 }
 
