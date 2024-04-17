@@ -535,10 +535,10 @@ impl Parser {
     #[doc(alias = "ts_parser_print_dot_graphs")]
     pub fn print_dot_graphs(
         &mut self,
-        #[cfg(not(windows))] file: &impl AsRawFd,
+        #[cfg(unix)] file: &impl AsRawFd,
         #[cfg(windows)] file: &impl AsRawHandle,
     ) {
-        #[cfg(not(windows))]
+        #[cfg(unix)]
         {
             let fd = file.as_raw_fd();
             unsafe {
