@@ -1,7 +1,8 @@
-use crate::core::util::*;
-use crate::core::*;
-use :: c2rust_bitfields;
 use std::os;
+
+use :: c2rust_bitfields;
+
+use crate::core::{util::*, *};
 pub type __int8_t = libc::c_schar;
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
@@ -622,8 +623,8 @@ static mut DEFAULT_RANGE: TSRange = {
 static mut MAX_COST_DIFFERENCE: libc::c_uint =
     (16 as libc::c_int * 100 as libc::c_int) as libc::c_uint;
 static mut MAX_VERSION_COUNT: libc::c_uint = 6 as libc::c_int as libc::c_uint;
-static mut OP_COUNT_PER_TIMEOUT_CHECK: libc::c_uint = 100 as libc::c_int as libc::c_uint;
 static mut MAX_SUMMARY_DEPTH: libc::c_uint = 16 as libc::c_int as libc::c_uint;
+static mut OP_COUNT_PER_TIMEOUT_CHECK: libc::c_uint = 100 as libc::c_int as libc::c_uint;
 static mut MAX_VERSION_COUNT_OVERFLOW: libc::c_uint = 4 as libc::c_int as libc::c_uint;
 static mut PARENT_DONE: TSQueryError = 4294967295 as TSQueryError;
 static mut PATTERN_DONE_MARKER: uint16_t = 65535 as libc::c_int as uint16_t;

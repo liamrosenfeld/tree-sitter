@@ -1,3 +1,5 @@
+#!/bin/bash
+
 rm lib/src/*.rs
 rm -rf lib/binding_rust/core_wrapper/core
 
@@ -13,7 +15,7 @@ sed -i "s/type_0/type_/g" lib/src/*.rs
 
 cargo run -p process_c2rust
 
-mkdir lib/binding_rust/core_wrapper/core
+mkdir -p lib/binding_rust/core_wrapper/core
 mv lib/src/*.rs lib/binding_rust/core_wrapper/core/
 
 output_path=lib/binding_rust/core_wrapper/core/defines.rs
@@ -29,4 +31,4 @@ for define in ${defines[@]}; do
   echo "pub const $define: usize = $define_value;" >> $output_path
 done
 
-cargo fmt
+cargo +nightly fmt

@@ -1,6 +1,6 @@
-use crate::core::util::*;
-use crate::core::*;
 use std::os;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __uint16_t = libc::c_ushort;
 pub type __int32_t = libc::c_int;
@@ -47,11 +47,11 @@ static mut LENGTH_UNDEFINED: Length = {
 };
 #[inline]
 unsafe extern "C" fn length_is_undefined(mut length: Length) -> bool {
-    return length.bytes == 0 as libc::c_int as libc::c_uint
-        && length.extent.column != 0 as libc::c_int as libc::c_uint;
+    return length.bytes == 0 as libc::c_int as uint32_t
+        && length.extent.column != 0 as libc::c_int as uint32_t;
 }
 #[inline]
-unsafe extern "C" fn ts_decode_utf8(
+unsafe extern "C" fn ts_decode_utf16(
     mut string: *const uint8_t,
     mut length: uint32_t,
     mut code_point: *mut int32_t,
@@ -59,7 +59,36 @@ unsafe extern "C" fn ts_decode_utf8(
     let mut i: uint32_t = 0 as libc::c_int as uint32_t;
     let fresh0 = i;
     i = i.wrapping_add(1);
-    *code_point = *string.offset(fresh0 as isize) as int32_t;
+    *code_point = *(string as *mut uint16_t).offset(fresh0 as isize) as int32_t;
+    if *code_point as libc::c_uint & 0xfffffc00 as libc::c_uint
+        == 0xd800 as libc::c_int as libc::c_uint
+    {
+        let mut __c2: uint16_t = 0;
+        if i != length && {
+            __c2 = *(string as *mut uint16_t).offset(i as isize);
+            __c2 as libc::c_uint & 0xfffffc00 as libc::c_uint
+                == 0xdc00 as libc::c_int as libc::c_uint
+        } {
+            i = i.wrapping_add(1);
+            i;
+            *code_point = (*code_point << 10 as libc::c_ulong) + __c2 as UChar32
+                - (((0xd800 as libc::c_int) << 10 as libc::c_ulong) + 0xdc00 as libc::c_int
+                    - 0x10000 as libc::c_int);
+        }
+    }
+    return i * 2 as libc::c_int as uint32_t;
+}
+static mut TS_DECODE_ERROR: int32_t = -(1 as libc::c_int);
+#[inline]
+unsafe extern "C" fn ts_decode_utf8(
+    mut string: *const uint8_t,
+    mut length: uint32_t,
+    mut code_point: *mut int32_t,
+) -> uint32_t {
+    let mut i: uint32_t = 0 as libc::c_int as uint32_t;
+    let fresh1 = i;
+    i = i.wrapping_add(1);
+    *code_point = *string.offset(fresh1 as isize) as int32_t;
     if !(*code_point & 0x80 as libc::c_int == 0 as libc::c_int) {
         let mut __t: uint8_t = 0 as libc::c_int as uint8_t;
         if !(i != length
@@ -118,6 +147,7 @@ unsafe extern "C" fn ts_decode_utf8(
             && {
                 *code_point = *code_point << 6 as libc::c_int | __t as libc::c_int;
                 i = i.wrapping_add(1);
+                i;
                 1 as libc::c_int != 0
             })
         {
@@ -126,34 +156,6 @@ unsafe extern "C" fn ts_decode_utf8(
     }
     return i;
 }
-#[inline]
-unsafe extern "C" fn ts_decode_utf16(
-    mut string: *const uint8_t,
-    mut length: uint32_t,
-    mut code_point: *mut int32_t,
-) -> uint32_t {
-    let mut i: uint32_t = 0 as libc::c_int as uint32_t;
-    let fresh1 = i;
-    i = i.wrapping_add(1);
-    *code_point = *(string as *mut uint16_t).offset(fresh1 as isize) as int32_t;
-    if *code_point as libc::c_uint & 0xfffffc00 as libc::c_uint
-        == 0xd800 as libc::c_int as libc::c_uint
-    {
-        let mut __c2: uint16_t = 0;
-        if i != length && {
-            __c2 = *(string as *mut uint16_t).offset(i as isize);
-            __c2 as libc::c_uint & 0xfffffc00 as libc::c_uint
-                == 0xdc00 as libc::c_int as libc::c_uint
-        } {
-            i = i.wrapping_add(1);
-            *code_point = (*code_point << 10 as libc::c_ulong) + __c2 as UChar32
-                - (((0xd800 as libc::c_int) << 10 as libc::c_ulong) + 0xdc00 as libc::c_int
-                    - 0x10000 as libc::c_int);
-        }
-    }
-    return i.wrapping_mul(2 as libc::c_int as libc::c_uint);
-}
-static mut TS_DECODE_ERROR: int32_t = -(1 as libc::c_int);
 static mut BYTE_ORDER_MARK: int32_t = 0xfeff as libc::c_int;
 static mut DEFAULT_RANGE: TSRange = {
     let mut init = TSRange {
@@ -202,7 +204,7 @@ unsafe extern "C" fn ts_lexer__get_lookahead(mut self_0: *mut Lexer) {
     let mut position_in_chunk: uint32_t =
         ((*self_0).current_position.bytes).wrapping_sub((*self_0).chunk_start);
     let mut size: uint32_t = ((*self_0).chunk_size).wrapping_sub(position_in_chunk);
-    if size == 0 as libc::c_int as libc::c_uint {
+    if size == 0 as libc::c_int as uint32_t {
         (*self_0).lookahead_size = 1 as libc::c_int as uint32_t;
         (*self_0).data.lookahead = '\0' as i32;
         return;
@@ -224,7 +226,7 @@ unsafe extern "C" fn ts_lexer__get_lookahead(mut self_0: *mut Lexer) {
     };
     (*self_0).lookahead_size =
         decode.expect("non-null function pointer")(chunk, size, &mut (*self_0).data.lookahead);
-    if (*self_0).data.lookahead == TS_DECODE_ERROR && size < 4 as libc::c_int as libc::c_uint {
+    if (*self_0).data.lookahead == TS_DECODE_ERROR && size < 4 as libc::c_int as uint32_t {
         ts_lexer__get_chunk(self_0);
         chunk = (*self_0).chunk as *const uint8_t;
         size = (*self_0).chunk_size;
@@ -259,6 +261,7 @@ unsafe extern "C" fn ts_lexer_goto(mut self_0: *mut Lexer, mut position: Length)
             break;
         } else {
             i = i.wrapping_add(1);
+            i;
         }
     }
     if found_included_range {
@@ -274,8 +277,7 @@ unsafe extern "C" fn ts_lexer_goto(mut self_0: *mut Lexer, mut position: Length)
     } else {
         (*self_0).current_included_range_index = (*self_0).included_range_count;
         let mut last_included_range: *mut TSRange = &mut *((*self_0).included_ranges).offset(
-            ((*self_0).included_range_count).wrapping_sub(1 as libc::c_int as libc::c_uint)
-                as isize,
+            ((*self_0).included_range_count).wrapping_sub(1 as libc::c_int as uint32_t) as isize,
         ) as *mut TSRange;
         (*self_0).current_position = {
             let mut init = Length {
@@ -291,17 +293,16 @@ unsafe extern "C" fn ts_lexer_goto(mut self_0: *mut Lexer, mut position: Length)
 }
 unsafe extern "C" fn ts_lexer__do_advance(mut self_0: *mut Lexer, mut skip: bool) {
     if (*self_0).lookahead_size != 0 {
-        (*self_0).current_position.bytes = ((*self_0).current_position.bytes as libc::c_uint)
-            .wrapping_add((*self_0).lookahead_size)
-            as uint32_t as uint32_t;
+        (*self_0).current_position.bytes =
+            ((*self_0).current_position.bytes).wrapping_add((*self_0).lookahead_size);
         if (*self_0).data.lookahead == '\n' as i32 {
             (*self_0).current_position.extent.row =
                 ((*self_0).current_position.extent.row).wrapping_add(1);
+            (*self_0).current_position.extent.row;
             (*self_0).current_position.extent.column = 0 as libc::c_int as uint32_t;
         } else {
             (*self_0).current_position.extent.column =
-                ((*self_0).current_position.extent.column as libc::c_uint)
-                    .wrapping_add((*self_0).lookahead_size) as uint32_t as uint32_t;
+                ((*self_0).current_position.extent.column).wrapping_add((*self_0).lookahead_size);
         }
     }
     let mut current_range: *const TSRange = &mut *((*self_0).included_ranges)
@@ -313,9 +314,11 @@ unsafe extern "C" fn ts_lexer__do_advance(mut self_0: *mut Lexer, mut skip: bool
         if (*self_0).current_included_range_index < (*self_0).included_range_count {
             (*self_0).current_included_range_index =
                 ((*self_0).current_included_range_index).wrapping_add(1);
+            (*self_0).current_included_range_index;
         }
         if (*self_0).current_included_range_index < (*self_0).included_range_count {
             current_range = current_range.offset(1);
+            current_range;
             (*self_0).current_position = {
                 let mut init = Length {
                     bytes: (*current_range).start_byte,
@@ -415,7 +418,7 @@ unsafe extern "C" fn ts_lexer__mark_end(mut _self: *mut TSLexer) {
         let mut current_included_range: *mut TSRange = &mut *((*self_0).included_ranges)
             .offset((*self_0).current_included_range_index as isize)
             as *mut TSRange;
-        if (*self_0).current_included_range_index > 0 as libc::c_int as libc::c_uint
+        if (*self_0).current_included_range_index > 0 as libc::c_int as uint32_t
             && (*self_0).current_position.bytes == (*current_included_range).start_byte
         {
             let mut previous_included_range: *mut TSRange =
@@ -436,9 +439,8 @@ unsafe extern "C" fn ts_lexer__get_column(mut _self: *mut TSLexer) -> uint32_t {
     let mut self_0: *mut Lexer = _self as *mut Lexer;
     let mut goal_byte: uint32_t = (*self_0).current_position.bytes;
     (*self_0).did_get_column = 1 as libc::c_int != 0;
-    (*self_0).current_position.bytes = ((*self_0).current_position.bytes as libc::c_uint)
-        .wrapping_sub((*self_0).current_position.extent.column)
-        as uint32_t as uint32_t;
+    (*self_0).current_position.bytes =
+        ((*self_0).current_position.bytes).wrapping_sub((*self_0).current_position.extent.column);
     (*self_0).current_position.extent.column = 0 as libc::c_int as uint32_t;
     if (*self_0).current_position.bytes < (*self_0).chunk_start {
         ts_lexer__get_chunk(self_0);
@@ -448,6 +450,7 @@ unsafe extern "C" fn ts_lexer__get_column(mut _self: *mut TSLexer) -> uint32_t {
         ts_lexer__get_lookahead(self_0);
         while (*self_0).current_position.bytes < goal_byte && !((*self_0).chunk).is_null() {
             result = result.wrapping_add(1);
+            result;
             ts_lexer__do_advance(self_0, 0 as libc::c_int != 0);
             if ts_lexer__eof(_self) {
                 break;
@@ -566,7 +569,7 @@ pub unsafe extern "C" fn ts_lexer_start(mut self_0: *mut Lexer) {
         if (*self_0).lookahead_size == 0 {
             ts_lexer__get_lookahead(self_0);
         }
-        if (*self_0).current_position.bytes == 0 as libc::c_int as libc::c_uint
+        if (*self_0).current_position.bytes == 0 as libc::c_int as uint32_t
             && (*self_0).data.lookahead == BYTE_ORDER_MARK
         {
             ts_lexer__advance(&mut (*self_0).data, 1 as libc::c_int != 0);
@@ -585,9 +588,10 @@ pub unsafe extern "C" fn ts_lexer_finish(
         (*self_0).token_start_position = (*self_0).token_end_position;
     }
     let mut current_lookahead_end_byte: uint32_t =
-        ((*self_0).current_position.bytes).wrapping_add(1 as libc::c_int as libc::c_uint);
+        ((*self_0).current_position.bytes).wrapping_add(1 as libc::c_int as uint32_t);
     if (*self_0).data.lookahead == TS_DECODE_ERROR {
-        current_lookahead_end_byte = current_lookahead_end_byte.wrapping_add(1);
+        current_lookahead_end_byte =
+            current_lookahead_end_byte.wrapping_add(4 as libc::c_int as uint32_t);
     }
     if current_lookahead_end_byte > *lookahead_end_byte {
         *lookahead_end_byte = current_lookahead_end_byte;
@@ -609,7 +613,7 @@ pub unsafe extern "C" fn ts_lexer_set_included_ranges(
     mut ranges: *const TSRange,
     mut count: uint32_t,
 ) -> bool {
-    if count == 0 as libc::c_int as libc::c_uint || ranges.is_null() {
+    if count == 0 as libc::c_int as uint32_t || ranges.is_null() {
         ranges = &DEFAULT_RANGE;
         count = 1 as libc::c_int as uint32_t;
     } else {
@@ -622,6 +626,7 @@ pub unsafe extern "C" fn ts_lexer_set_included_ranges(
             }
             previous_byte = (*range).end_byte;
             i = i.wrapping_add(1);
+            i;
         }
     }
     let mut size: size_t =

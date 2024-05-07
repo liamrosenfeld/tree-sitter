@@ -1,6 +1,6 @@
-use crate::core::util::*;
-use crate::core::*;
 use std::os;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
@@ -116,9 +116,9 @@ unsafe extern "C" fn ts_language_lookup(
     mut state: TSStateId,
     mut symbol: TSSymbol,
 ) -> uint16_t {
-    if state as libc::c_uint >= (*self_0).large_state_count {
+    if state as uint32_t >= (*self_0).large_state_count {
         let mut index: uint32_t = *((*self_0).small_parse_table_map)
-            .offset((state as libc::c_uint).wrapping_sub((*self_0).large_state_count) as isize);
+            .offset((state as uint32_t).wrapping_sub((*self_0).large_state_count) as isize);
         let mut data: *const uint16_t =
             &*((*self_0).small_parse_table).offset(index as isize) as *const uint16_t;
         let fresh0 = data;
@@ -140,15 +140,15 @@ unsafe extern "C" fn ts_language_lookup(
                     return section_value;
                 }
                 j = j.wrapping_add(1);
+                j;
             }
             i = i.wrapping_add(1);
+            i;
         }
         return 0 as libc::c_int as uint16_t;
     } else {
         return *((*self_0).parse_table).offset(
-            (state as libc::c_uint)
-                .wrapping_mul((*self_0).symbol_count)
-                .wrapping_add(symbol as libc::c_uint) as isize,
+            (state as uint32_t * (*self_0).symbol_count).wrapping_add(symbol as uint32_t) as isize,
         );
     };
 }
@@ -173,19 +173,19 @@ unsafe extern "C" fn ts_language_lookaheads(
     mut self_0: *const TSLanguage,
     mut state: TSStateId,
 ) -> LookaheadIterator {
-    let mut is_small_state: bool = state as libc::c_uint >= (*self_0).large_state_count;
+    let mut is_small_state: bool = state as uint32_t >= (*self_0).large_state_count;
     let mut data: *const uint16_t = 0 as *const uint16_t;
     let mut group_end: *const uint16_t = 0 as *const uint16_t;
     let mut group_count: uint16_t = 0 as libc::c_int as uint16_t;
     if is_small_state {
         let mut index: uint32_t = *((*self_0).small_parse_table_map)
-            .offset((state as libc::c_uint).wrapping_sub((*self_0).large_state_count) as isize);
+            .offset((state as uint32_t).wrapping_sub((*self_0).large_state_count) as isize);
         data = &*((*self_0).small_parse_table).offset(index as isize) as *const uint16_t;
         group_end = data.offset(1 as libc::c_int as isize);
         group_count = *data;
     } else {
         data = (&*((*self_0).parse_table)
-            .offset((state as libc::c_uint).wrapping_mul((*self_0).symbol_count) as isize)
+            .offset((state as uint32_t * (*self_0).symbol_count) as isize)
             as *const uint16_t)
             .offset(-(1 as libc::c_int as isize));
     }
@@ -211,11 +211,13 @@ unsafe extern "C" fn ts_language_lookaheads(
 unsafe extern "C" fn ts_lookahead_iterator__next(mut self_0: *mut LookaheadIterator) -> bool {
     if (*self_0).is_small_state {
         (*self_0).data = ((*self_0).data).offset(1);
+        (*self_0).data;
         if (*self_0).data == (*self_0).group_end {
             if (*self_0).group_count as libc::c_int == 0 as libc::c_int {
                 return 0 as libc::c_int != 0;
             }
             (*self_0).group_count = ((*self_0).group_count).wrapping_sub(1);
+            (*self_0).group_count;
             let fresh4 = (*self_0).data;
             (*self_0).data = ((*self_0).data).offset(1);
             (*self_0).table_value = *fresh4;
@@ -231,8 +233,10 @@ unsafe extern "C" fn ts_lookahead_iterator__next(mut self_0: *mut LookaheadItera
     } else {
         loop {
             (*self_0).data = ((*self_0).data).offset(1);
+            (*self_0).data;
             (*self_0).symbol = ((*self_0).symbol).wrapping_add(1);
-            if (*self_0).symbol as libc::c_uint >= (*(*self_0).language).symbol_count {
+            (*self_0).symbol;
+            if (*self_0).symbol as uint32_t >= (*(*self_0).language).symbol_count {
                 return 0 as libc::c_int != 0;
             }
             (*self_0).table_value = *(*self_0).data;
@@ -241,7 +245,7 @@ unsafe extern "C" fn ts_lookahead_iterator__next(mut self_0: *mut LookaheadItera
             }
         }
     }
-    if ((*self_0).symbol as libc::c_uint) < (*(*self_0).language).token_count {
+    if ((*self_0).symbol as uint32_t) < (*(*self_0).language).token_count {
         let mut entry: *const TSParseActionEntry = &*((*(*self_0).language).parse_actions)
             .offset((*self_0).table_value as isize)
             as *const TSParseActionEntry;
@@ -298,10 +302,16 @@ pub unsafe extern "C" fn ts_language_table_entry(
         (*result).is_reusable = 0 as libc::c_int != 0;
         (*result).actions = 0 as *const TSParseAction;
     } else {
-        if (symbol as libc::c_uint) < (*self_0).token_count {
+        if (symbol as uint32_t) < (*self_0).token_count {
         } else {
             panic!();
         }
+        'c_3199: {
+            if (symbol as uint32_t) < (*self_0).token_count {
+            } else {
+                panic!();
+            }
+        };
         let mut action_index: uint32_t = ts_language_lookup(self_0, state, symbol) as uint32_t;
         let mut entry: *const TSParseActionEntry =
             &*((*self_0).parse_actions).offset(action_index as isize) as *const TSParseActionEntry;
@@ -360,13 +370,13 @@ pub unsafe extern "C" fn ts_language_next_state(
             == -(1 as libc::c_int) as TSSymbol as libc::c_int - 1 as libc::c_int
     {
         return 0 as libc::c_int as TSStateId;
-    } else if (symbol as libc::c_uint) < (*self_0).token_count {
+    } else if (symbol as uint32_t) < (*self_0).token_count {
         let mut count: uint32_t = 0;
         let mut actions: *const TSParseAction =
             ts_language_actions(self_0, state, symbol, &mut count);
-        if count > 0 as libc::c_int as libc::c_uint {
+        if count > 0 as libc::c_int as uint32_t {
             let mut action: TSParseAction =
-                *actions.offset(count.wrapping_sub(1 as libc::c_int as libc::c_uint) as isize);
+                *actions.offset(count.wrapping_sub(1 as libc::c_int as uint32_t) as isize);
             if action.type_ as libc::c_int == TSParseActionTypeShift as libc::c_int {
                 return (if action.shift.extra as libc::c_int != 0 {
                     state as libc::c_int
@@ -391,7 +401,7 @@ pub unsafe extern "C" fn ts_language_symbol_name(
         == -(1 as libc::c_int) as TSSymbol as libc::c_int - 1 as libc::c_int
     {
         return b"_ERROR\0" as *const u8 as *const libc::c_char;
-    } else if (symbol as libc::c_uint) < ts_language_symbol_count(self_0) {
+    } else if (symbol as uint32_t) < ts_language_symbol_count(self_0) {
         return *((*self_0).symbol_names).offset(symbol as isize);
     } else {
         return 0 as *const libc::c_char;
@@ -427,6 +437,7 @@ pub unsafe extern "C" fn ts_language_symbol_for_name(
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return 0 as libc::c_int as TSSymbol;
 }
@@ -450,7 +461,7 @@ pub unsafe extern "C" fn ts_language_field_name_for_id(
     mut id: TSFieldId,
 ) -> *const libc::c_char {
     let mut count: uint32_t = ts_language_field_count(self_0);
-    if count != 0 && id as libc::c_uint <= count {
+    if count != 0 && id as uint32_t <= count {
         return *((*self_0).field_names).offset(id as isize);
     } else {
         return 0 as *const libc::c_char;
@@ -482,6 +493,7 @@ pub unsafe extern "C" fn ts_language_field_id_for_name(
             _ => {}
         }
         i = i.wrapping_add(1);
+        i;
     }
     return 0 as libc::c_int as TSFieldId;
 }
@@ -490,7 +502,7 @@ pub unsafe extern "C" fn ts_lookahead_iterator_new(
     mut self_0: *const TSLanguage,
     mut state: TSStateId,
 ) -> *mut TSLookaheadIterator {
-    if state as libc::c_uint >= (*self_0).state_count {
+    if state as uint32_t >= (*self_0).state_count {
         return 0 as *mut TSLookaheadIterator;
     }
     let mut iterator: *mut LookaheadIterator =
@@ -509,7 +521,7 @@ pub unsafe extern "C" fn ts_lookahead_iterator_reset_state(
     mut state: TSStateId,
 ) -> bool {
     let mut iterator: *mut LookaheadIterator = self_0 as *mut LookaheadIterator;
-    if state as libc::c_uint >= (*(*iterator).language).state_count {
+    if state as uint32_t >= (*(*iterator).language).state_count {
         return 0 as libc::c_int != 0;
     }
     *iterator = ts_language_lookaheads((*iterator).language, state);
@@ -528,7 +540,7 @@ pub unsafe extern "C" fn ts_lookahead_iterator_reset(
     mut language: *const TSLanguage,
     mut state: TSStateId,
 ) -> bool {
-    if state as libc::c_uint >= (*language).state_count {
+    if state as uint32_t >= (*language).state_count {
         return 0 as libc::c_int != 0;
     }
     let mut iterator: *mut LookaheadIterator = self_0 as *mut LookaheadIterator;

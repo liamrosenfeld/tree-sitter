@@ -1,7 +1,8 @@
-use crate::core::util::*;
-use crate::core::*;
-use :: c2rust_bitfields;
 use std::os;
+
+use :: c2rust_bitfields;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
@@ -103,7 +104,7 @@ unsafe extern "C" fn ts_subtree_size(mut self_0: Subtree) -> Length {
 }
 #[inline]
 unsafe extern "C" fn point_add(mut a: TSPoint, mut b: TSPoint) -> TSPoint {
-    if b.row > 0 as libc::c_int as libc::c_uint {
+    if b.row > 0 as libc::c_int as uint32_t {
         return point__new((a.row).wrapping_add(b.row), b.column);
     } else {
         return point__new(a.row, (a.column).wrapping_add(b.column));
@@ -158,7 +159,7 @@ unsafe extern "C" fn ts_subtree_error_cost(mut self_0: Subtree) -> uint32_t {
         return (110 as libc::c_int + 500 as libc::c_int) as uint32_t;
     } else {
         return if (self_0.data).is_inline() as libc::c_int != 0 {
-            0 as libc::c_int as libc::c_uint
+            0 as libc::c_int as uint32_t
         } else {
             (*self_0.ptr).error_cost
         };
@@ -183,7 +184,7 @@ unsafe extern "C" fn ts_subtree_visible(mut self_0: Subtree) -> bool {
 #[inline]
 unsafe extern "C" fn ts_subtree_child_count(mut self_0: Subtree) -> uint32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0 {
-        0 as libc::c_int as libc::c_uint
+        0 as libc::c_int as uint32_t
     } else {
         (*self_0.ptr).child_count
     };
@@ -247,9 +248,9 @@ unsafe extern "C" fn ts_subtree_total_size(mut self_0: Subtree) -> Length {
 #[inline]
 unsafe extern "C" fn ts_subtree_visible_descendant_count(mut self_0: Subtree) -> uint32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0
-        || (*self_0.ptr).child_count == 0 as libc::c_int as libc::c_uint
+        || (*self_0.ptr).child_count == 0 as libc::c_int as uint32_t
     {
-        0 as libc::c_int as libc::c_uint
+        0 as libc::c_int as uint32_t
     } else {
         (*self_0.ptr)
             .c2rust_unnamed
@@ -282,10 +283,9 @@ unsafe extern "C" fn ts_language_alias_sequence(
     mut production_id: uint32_t,
 ) -> *const TSSymbol {
     return if production_id != 0 {
-        &*((*self_0).alias_sequences).offset(
-            production_id.wrapping_mul((*self_0).max_alias_sequence_length as libc::c_uint)
-                as isize,
-        ) as *const TSSymbol
+        &*((*self_0).alias_sequences)
+            .offset((production_id * (*self_0).max_alias_sequence_length as uint32_t) as isize)
+            as *const TSSymbol
     } else {
         0 as *const TSSymbol
     };
@@ -297,7 +297,7 @@ unsafe extern "C" fn ts_language_field_map(
     mut start: *mut *const TSFieldMapEntry,
     mut end: *mut *const TSFieldMapEntry,
 ) {
-    if (*self_0).field_count == 0 as libc::c_int as libc::c_uint {
+    if (*self_0).field_count == 0 as libc::c_int as uint32_t {
         *start = 0 as *const TSFieldMapEntry;
         *end = 0 as *const TSFieldMapEntry;
         return;
@@ -362,7 +362,7 @@ unsafe extern "C" fn ts_node__subtree(mut self_0: TSNode) -> Subtree {
 #[inline]
 unsafe extern "C" fn ts_node_iterate_children(mut node: *const TSNode) -> NodeChildIterator {
     let mut subtree: Subtree = ts_node__subtree(*node);
-    if ts_subtree_child_count(subtree) == 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_child_count(subtree) == 0 as libc::c_int as uint32_t {
         return {
             let mut init = NodeChildIterator {
                 parent: Subtree {
@@ -426,13 +426,15 @@ unsafe extern "C" fn ts_node_child_iterator_next(
                 *((*self_0).alias_sequence).offset((*self_0).structural_child_index as isize);
         }
         (*self_0).structural_child_index = ((*self_0).structural_child_index).wrapping_add(1);
+        (*self_0).structural_child_index;
     }
-    if (*self_0).child_index > 0 as libc::c_int as libc::c_uint {
+    if (*self_0).child_index > 0 as libc::c_int as uint32_t {
         (*self_0).position = length_add((*self_0).position, ts_subtree_padding(*child));
     }
     *result = ts_node_new((*self_0).tree, child, (*self_0).position, alias_symbol);
     (*self_0).position = length_add((*self_0).position, ts_subtree_size(*child));
     (*self_0).child_index = ((*self_0).child_index).wrapping_add(1);
+    (*self_0).child_index;
     return 1 as libc::c_int != 0;
 }
 #[inline]
@@ -456,7 +458,7 @@ unsafe extern "C" fn ts_node__relevant_child_count(
     mut include_anonymous: bool,
 ) -> uint32_t {
     let mut tree: Subtree = ts_node__subtree(self_0);
-    if ts_subtree_child_count(tree) > 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_child_count(tree) > 0 as libc::c_int as uint32_t {
         if include_anonymous {
             return (*tree.ptr)
                 .c2rust_unnamed
@@ -492,6 +494,7 @@ unsafe extern "C" fn ts_node__child(
                     return child;
                 }
                 index = index.wrapping_add(1);
+                index;
             } else {
                 let mut grandchild_index: uint32_t = child_index.wrapping_sub(index);
                 let mut grandchild_count: uint32_t =
@@ -502,8 +505,7 @@ unsafe extern "C" fn ts_node__child(
                     child_index = grandchild_index;
                     break;
                 } else {
-                    index = (index as libc::c_uint).wrapping_add(grandchild_count) as uint32_t
-                        as uint32_t;
+                    index = index.wrapping_add(grandchild_count);
                 }
             }
         }
@@ -515,7 +517,7 @@ unsafe extern "C" fn ts_subtree_has_trailing_empty_descendant(
     mut other: Subtree,
 ) -> bool {
     let mut i: libc::c_uint =
-        (ts_subtree_child_count(self_0)).wrapping_sub(1 as libc::c_int as libc::c_uint);
+        (ts_subtree_child_count(self_0)).wrapping_sub(1 as libc::c_int as uint32_t);
     while i.wrapping_add(1 as libc::c_int as libc::c_uint) > 0 as libc::c_int as libc::c_uint {
         let mut child: Subtree = *if (self_0.data).is_inline() as libc::c_int != 0 {
             0 as *mut Subtree
@@ -523,7 +525,7 @@ unsafe extern "C" fn ts_subtree_has_trailing_empty_descendant(
             (self_0.ptr as *mut Subtree).offset(-((*self_0.ptr).child_count as isize))
         }
         .offset(i as isize);
-        if ts_subtree_total_bytes(child) > 0 as libc::c_int as libc::c_uint {
+        if ts_subtree_total_bytes(child) > 0 as libc::c_int as uint32_t {
             break;
         }
         if child.ptr == other.ptr
@@ -532,6 +534,7 @@ unsafe extern "C" fn ts_subtree_has_trailing_empty_descendant(
             return 1 as libc::c_int != 0;
         }
         i = i.wrapping_sub(1);
+        i;
     }
     return 0 as libc::c_int != 0;
 }
@@ -542,7 +545,7 @@ unsafe extern "C" fn ts_node__prev_sibling(
 ) -> TSNode {
     let mut self_subtree: Subtree = ts_node__subtree(self_0);
     let mut self_is_empty: bool =
-        ts_subtree_total_bytes(self_subtree) == 0 as libc::c_int as libc::c_uint;
+        ts_subtree_total_bytes(self_subtree) == 0 as libc::c_int as uint32_t;
     let mut target_end_byte: uint32_t = ts_node_end_byte(self_0);
     let mut node: TSNode = ts_node_parent(self_0);
     let mut earlier_node: TSNode = ts_node__null();
@@ -578,7 +581,7 @@ unsafe extern "C" fn ts_node__prev_sibling(
                 earlier_child = child;
                 earlier_child_is_relevant = 1 as libc::c_int != 0;
             } else if ts_node__relevant_child_count(child, include_anonymous)
-                > 0 as libc::c_int as libc::c_uint
+                > 0 as libc::c_int as uint32_t
             {
                 earlier_child = child;
                 earlier_child_is_relevant = 0 as libc::c_int != 0;
@@ -592,16 +595,14 @@ unsafe extern "C" fn ts_node__prev_sibling(
             node = child;
         } else if earlier_child_is_relevant {
             return earlier_child;
+        } else if !ts_node_is_null(earlier_child) {
+            node = earlier_child;
+        } else if earlier_node_is_relevant {
+            return earlier_node;
         } else {
-            if !ts_node_is_null(earlier_child) {
-                node = earlier_child;
-            } else if earlier_node_is_relevant {
-                return earlier_node;
-            } else {
-                node = earlier_node;
-                earlier_node = ts_node__null();
-                earlier_node_is_relevant = 0 as libc::c_int != 0;
-            }
+            node = earlier_node;
+            earlier_node = ts_node__null();
+            earlier_node_is_relevant = 0 as libc::c_int != 0;
         }
     }
     return ts_node__null();
@@ -639,7 +640,7 @@ unsafe extern "C" fn ts_node__next_sibling(
                 break;
             } else {
                 if !(ts_node__relevant_child_count(child, include_anonymous)
-                    > 0 as libc::c_int as libc::c_uint)
+                    > 0 as libc::c_int as uint32_t)
                 {
                     continue;
                 }
@@ -656,14 +657,12 @@ unsafe extern "C" fn ts_node__next_sibling(
             node = child_containing_target;
         } else if later_child_is_relevant {
             return later_child;
+        } else if !ts_node_is_null(later_child) {
+            node = later_child;
+        } else if later_node_is_relevant {
+            return later_node;
         } else {
-            if !ts_node_is_null(later_child) {
-                node = later_child;
-            } else if later_node_is_relevant {
-                return later_node;
-            } else {
-                node = later_node;
-            }
+            node = later_node;
         }
     }
     return ts_node__null();
@@ -691,7 +690,7 @@ unsafe extern "C" fn ts_node__first_child_for_byte(
             if ts_node__is_relevant(child, include_anonymous) {
                 return child;
             } else {
-                if !(ts_node_child_count(child) > 0 as libc::c_int as libc::c_uint) {
+                if !(ts_node_child_count(child) > 0 as libc::c_int as uint32_t) {
                     continue;
                 }
                 did_descend = 1 as libc::c_int != 0;
@@ -863,7 +862,7 @@ pub unsafe extern "C" fn ts_node_has_changes(mut self_0: TSNode) -> bool {
 }
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_has_error(mut self_0: TSNode) -> bool {
-    return ts_subtree_error_cost(ts_node__subtree(self_0)) > 0 as libc::c_int as libc::c_uint;
+    return ts_subtree_error_cost(ts_node__subtree(self_0)) > 0 as libc::c_int as uint32_t;
 }
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_is_error(mut self_0: TSNode) -> bool {
@@ -873,7 +872,7 @@ pub unsafe extern "C" fn ts_node_is_error(mut self_0: TSNode) -> bool {
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_descendant_count(mut self_0: TSNode) -> uint32_t {
     return (ts_subtree_visible_descendant_count(ts_node__subtree(self_0)))
-        .wrapping_add(1 as libc::c_int as libc::c_uint);
+        .wrapping_add(1 as libc::c_int as uint32_t);
 }
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_parse_state(mut self_0: TSNode) -> TSStateId {
@@ -892,38 +891,45 @@ pub unsafe extern "C" fn ts_node_next_parse_state(mut self_0: TSNode) -> TSState
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_parent(mut self_0: TSNode) -> TSNode {
     let mut node: TSNode = ts_tree_root_node(self_0.tree);
-    let mut end_byte: uint32_t = ts_node_end_byte(self_0);
     if node.id == self_0.id {
         return ts_node__null();
     }
-    let mut last_visible_node: TSNode = node;
-    let mut did_descend: bool = 1 as libc::c_int != 0;
-    while did_descend {
-        did_descend = 0 as libc::c_int != 0;
-        let mut child: TSNode = TSNode {
-            context: [0; 4],
-            id: 0 as *const libc::c_void,
-            tree: 0 as *const TSTree,
-        };
-        let mut iterator: NodeChildIterator = ts_node_iterate_children(&mut node);
-        while ts_node_child_iterator_next(&mut iterator, &mut child) {
-            if ts_node_start_byte(child) > ts_node_start_byte(self_0) || child.id == self_0.id {
+    loop {
+        let mut next_node: TSNode = ts_node_child_containing_descendant(node, self_0);
+        if ts_node_is_null(next_node) {
+            break;
+        }
+        node = next_node;
+    }
+    return node;
+}
+#[no_mangle]
+pub unsafe extern "C" fn ts_node_child_containing_descendant(
+    mut self_0: TSNode,
+    mut subnode: TSNode,
+) -> TSNode {
+    let mut start_byte: uint32_t = ts_node_start_byte(subnode);
+    let mut end_byte: uint32_t = ts_node_end_byte(subnode);
+    loop {
+        let mut iter: NodeChildIterator = ts_node_iterate_children(&mut self_0);
+        loop {
+            if !ts_node_child_iterator_next(&mut iter, &mut self_0)
+                || ts_node_start_byte(self_0) > start_byte
+                || self_0.id == subnode.id
+            {
+                return ts_node__null();
+            }
+            if !(iter.position.bytes < end_byte
+                || ts_node_child_count(self_0) == 0 as libc::c_int as uint32_t)
+            {
                 break;
             }
-            if !(iterator.position.bytes >= end_byte
-                && ts_node_child_count(child) > 0 as libc::c_int as libc::c_uint)
-            {
-                continue;
-            }
-            node = child;
-            if ts_node__is_relevant(child, 1 as libc::c_int != 0) {
-                last_visible_node = node;
-            }
-            did_descend = 1 as libc::c_int != 0;
+        }
+        if ts_node__is_relevant(self_0, 1 as libc::c_int != 0) {
             break;
         }
     }
-    return last_visible_node;
+    return self_0;
 }
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_child(mut self_0: TSNode, mut child_index: uint32_t) -> TSNode {
@@ -970,7 +976,7 @@ pub unsafe extern "C" fn ts_node_child_by_field_id(
         alias_sequence: 0 as *const TSSymbol,
     };
     '_recur: loop {
-        if field_id == 0 || ts_node_child_count(self_0) == 0 as libc::c_int as libc::c_uint {
+        if field_id == 0 || ts_node_child_count(self_0) == 0 as libc::c_int as uint32_t {
             return ts_node__null();
         }
         field_map = 0 as *const TSFieldMapEntry;
@@ -989,6 +995,7 @@ pub unsafe extern "C" fn ts_node_child_by_field_id(
         }
         while ((*field_map).field_id as libc::c_int) < field_id as libc::c_int {
             field_map = field_map.offset(1);
+            field_map;
             if field_map == field_map_end {
                 return ts_node__null();
             }
@@ -997,6 +1004,7 @@ pub unsafe extern "C" fn ts_node_child_by_field_id(
             > field_id as libc::c_int
         {
             field_map_end = field_map_end.offset(-1);
+            field_map_end;
             if field_map == field_map_end {
                 return ts_node__null();
             }
@@ -1015,8 +1023,8 @@ pub unsafe extern "C" fn ts_node_child_by_field_id(
                 continue;
             }
             let mut index: uint32_t =
-                (iterator.structural_child_index).wrapping_sub(1 as libc::c_int as libc::c_uint);
-            if index < (*field_map).child_index as libc::c_uint {
+                (iterator.structural_child_index).wrapping_sub(1 as libc::c_int as uint32_t);
+            if index < (*field_map).child_index as uint32_t {
                 continue;
             }
             if (*field_map).inherited {
@@ -1029,20 +1037,20 @@ pub unsafe extern "C" fn ts_node_child_by_field_id(
                         return result;
                     }
                     field_map = field_map.offset(1);
+                    field_map;
                     if field_map == field_map_end {
                         return ts_node__null();
                     }
                 }
             } else if ts_node__is_relevant(child, 1 as libc::c_int != 0) {
                 return child;
+            } else if ts_node_child_count(child) > 0 as libc::c_int as uint32_t {
+                return ts_node_child(child, 0 as libc::c_int as uint32_t);
             } else {
-                if ts_node_child_count(child) > 0 as libc::c_int as libc::c_uint {
-                    return ts_node_child(child, 0 as libc::c_int as uint32_t);
-                } else {
-                    field_map = field_map.offset(1);
-                    if field_map == field_map_end {
-                        return ts_node__null();
-                    }
+                field_map = field_map.offset(1);
+                field_map;
+                if field_map == field_map_end {
+                    return ts_node__null();
                 }
             }
         }
@@ -1066,13 +1074,13 @@ unsafe extern "C" fn ts_node__field_name_from_language(
         &mut field_map_end,
     );
     while field_map != field_map_end {
-        if !(*field_map).inherited
-            && (*field_map).child_index as libc::c_uint == structural_child_index
+        if !(*field_map).inherited && (*field_map).child_index as uint32_t == structural_child_index
         {
             return *((*(*self_0.tree).language).field_names)
                 .offset((*field_map).field_id as isize);
         }
         field_map = field_map.offset(1);
+        field_map;
     }
     return 0 as *const libc::c_char;
 }
@@ -1096,10 +1104,13 @@ pub unsafe extern "C" fn ts_node_field_name_for_child(
         while ts_node_child_iterator_next(&mut iterator, &mut child) {
             if ts_node__is_relevant(child, 1 as libc::c_int != 0) {
                 if index == child_index {
+                    if ts_node_is_extra(child) {
+                        return 0 as *const libc::c_char;
+                    }
                     let mut field_name: *const libc::c_char = ts_node__field_name_from_language(
                         result,
                         (iterator.structural_child_index)
-                            .wrapping_sub(1 as libc::c_int as libc::c_uint),
+                            .wrapping_sub(1 as libc::c_int as uint32_t),
                     );
                     if !field_name.is_null() {
                         return field_name;
@@ -1107,6 +1118,7 @@ pub unsafe extern "C" fn ts_node_field_name_for_child(
                     return inherited_field_name;
                 }
                 index = index.wrapping_add(1);
+                index;
             } else {
                 let mut grandchild_index: uint32_t = child_index.wrapping_sub(index);
                 let mut grandchild_count: uint32_t =
@@ -1115,7 +1127,7 @@ pub unsafe extern "C" fn ts_node_field_name_for_child(
                     let mut field_name_0: *const libc::c_char = ts_node__field_name_from_language(
                         result,
                         (iterator.structural_child_index)
-                            .wrapping_sub(1 as libc::c_int as libc::c_uint),
+                            .wrapping_sub(1 as libc::c_int as uint32_t),
                     );
                     if !field_name_0.is_null() {
                         inherited_field_name = field_name_0;
@@ -1125,8 +1137,7 @@ pub unsafe extern "C" fn ts_node_field_name_for_child(
                     child_index = grandchild_index;
                     break;
                 } else {
-                    index = (index as libc::c_uint).wrapping_add(grandchild_count) as uint32_t
-                        as uint32_t;
+                    index = index.wrapping_add(grandchild_count);
                 }
             }
         }
@@ -1146,7 +1157,7 @@ pub unsafe extern "C" fn ts_node_child_by_field_name(
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_child_count(mut self_0: TSNode) -> uint32_t {
     let mut tree: Subtree = ts_node__subtree(self_0);
-    if ts_subtree_child_count(tree) > 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_child_count(tree) > 0 as libc::c_int as uint32_t {
         return (*tree.ptr)
             .c2rust_unnamed
             .c2rust_unnamed
@@ -1158,7 +1169,7 @@ pub unsafe extern "C" fn ts_node_child_count(mut self_0: TSNode) -> uint32_t {
 #[no_mangle]
 pub unsafe extern "C" fn ts_node_named_child_count(mut self_0: TSNode) -> uint32_t {
     let mut tree: Subtree = ts_node__subtree(self_0);
-    if ts_subtree_child_count(tree) > 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_child_count(tree) > 0 as libc::c_int as uint32_t {
         return (*tree.ptr).c2rust_unnamed.c2rust_unnamed.named_child_count;
     } else {
         return 0 as libc::c_int as uint32_t;

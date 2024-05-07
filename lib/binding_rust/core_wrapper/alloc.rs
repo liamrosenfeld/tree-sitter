@@ -1,5 +1,4 @@
-use std::{alloc, ffi, ptr};
-use std::{alloc::Layout, mem::align_of};
+use std::{alloc, alloc::Layout, ffi, mem::align_of, ptr};
 
 pub unsafe fn ts_set_allocator(
     _new_malloc: Option<unsafe extern "C" fn(usize) -> *mut std::ffi::c_void>,

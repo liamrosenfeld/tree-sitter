@@ -1,7 +1,8 @@
-use crate::core::util::*;
-use crate::core::*;
-use :: c2rust_bitfields;
 use std::os;
+
+use :: c2rust_bitfields;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
@@ -129,7 +130,7 @@ unsafe extern "C" fn point__new(mut row: libc::c_uint, mut column: libc::c_uint)
 }
 #[inline]
 unsafe extern "C" fn point_add(mut a: TSPoint, mut b: TSPoint) -> TSPoint {
-    if b.row > 0 as libc::c_int as libc::c_uint {
+    if b.row > 0 as libc::c_int as uint32_t {
         return point__new((a.row).wrapping_add(b.row), b.column);
     } else {
         return point__new(a.row, (a.column).wrapping_add(b.column));
@@ -276,6 +277,7 @@ pub unsafe extern "C" fn ts_tree_edit(mut self_0: *mut TSTree, mut edit: *const 
             (*range).start_point = (*edit).start_point;
         }
         i = i.wrapping_add(1);
+        i;
     }
     let mut pool: SubtreePool = ts_subtree_pool_new(0 as libc::c_int as uint32_t);
     (*self_0).root = ts_subtree_edit((*self_0).root, edit, &mut pool);

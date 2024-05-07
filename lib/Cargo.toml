@@ -1,7 +1,7 @@
 [package]
-name = "tree-sitter-c2rust"
+name = "tree-sitter"
 version.workspace = true
-description = "Rust bindings to the Tree-sitter parsing library, with a pure Rust runtime via c2rust"
+description = "Rust bindings to the Tree-sitter parsing library"
 authors.workspace = true
 edition.workspace = true
 rust-version = "1.65"
@@ -26,7 +26,6 @@ build = "binding_rust/build.rs"
 
 [features]
 wasm = ["wasmtime-c-api"]
-capi = ["errno", "libc"]
 
 [dependencies]
 regex.workspace = true

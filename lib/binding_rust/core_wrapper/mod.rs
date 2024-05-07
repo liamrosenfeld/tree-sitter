@@ -1,6 +1,3 @@
-#[cfg(feature = "capi")]
-pub(crate) mod capi;
-
 pub(crate) mod alloc;
 pub(crate) mod util;
 
@@ -42,8 +39,7 @@ pub mod core {
     #[allow(unused, clippy::all)]
     pub(crate) mod wasm_store;
 
-    pub(crate) use crate::core_wrapper::alloc;
-    pub(crate) use crate::core_wrapper::util;
+    pub(crate) use crate::core_wrapper::{alloc, util};
 
     #[no_mangle]
     pub static ts_current_free: unsafe extern "C" fn(*mut std::ffi::c_void) = ts_free;
@@ -99,6 +95,7 @@ pub mod core {
     }
 
     pub use alloc::*;
+
     pub use api_raw::*;
     pub use get_changed_ranges::*;
     pub use language::*;

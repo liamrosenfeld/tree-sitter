@@ -1,7 +1,8 @@
-use crate::core::util::*;
-use crate::core::*;
-use :: c2rust_bitfields;
 use std::os;
+
+use :: c2rust_bitfields;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
@@ -238,20 +239,25 @@ unsafe extern "C" fn _array__erase(
     } else {
         panic!();
     }
+    'c_7240: {
+        if index < (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
     let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
     std::ptr::copy(
         contents.offset(
-            (index.wrapping_add(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
-                .wrapping_mul(element_size) as isize,
+            (index.wrapping_add(1 as libc::c_int as uint32_t) as size_t * element_size) as isize,
         ) as *const libc::c_void,
-        contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-            as *mut libc::c_void,
-        ((((*self_0).size)
+        contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
+        (((*self_0).size)
             .wrapping_sub(index)
-            .wrapping_sub(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
-            .wrapping_mul(element_size)) as usize,
+            .wrapping_sub(1 as libc::c_int as uint32_t) as size_t
+            * element_size) as usize,
     );
     (*self_0).size = ((*self_0).size).wrapping_sub(1);
+    (*self_0).size;
 }
 #[inline]
 unsafe extern "C" fn _array__reserve(
@@ -263,12 +269,11 @@ unsafe extern "C" fn _array__reserve(
         if !((*self_0).contents).is_null() {
             (*self_0).contents = crate::core::alloc::ts_realloc(
                 (*self_0).contents,
-                (new_capacity as libc::c_ulong).wrapping_mul(element_size),
+                new_capacity as size_t * element_size,
             );
         } else {
-            (*self_0).contents = crate::core::alloc::ts_malloc(
-                (new_capacity as libc::c_ulong).wrapping_mul(element_size),
-            );
+            (*self_0).contents =
+                crate::core::alloc::ts_malloc(new_capacity as size_t * element_size);
         }
         (*self_0).capacity = new_capacity;
     }
@@ -284,7 +289,7 @@ unsafe extern "C" fn _array__assign(
     std::ptr::copy_nonoverlapping(
         (*other).contents,
         (*self_0).contents,
-        ((*self_0).size as libc::c_ulong).wrapping_mul(element_size),
+        (*self_0).size as size_t * element_size,
     );
 }
 #[inline]
@@ -292,6 +297,24 @@ unsafe extern "C" fn _array__swap(mut self_0: *mut Array, mut other: *mut Array)
     let mut swap: Array = *other;
     *other = *self_0;
     *self_0 = swap;
+}
+#[inline]
+unsafe extern "C" fn _array__grow(
+    mut self_0: *mut Array,
+    mut count: uint32_t,
+    mut element_size: size_t,
+) {
+    let mut new_size: uint32_t = ((*self_0).size).wrapping_add(count);
+    if new_size > (*self_0).capacity {
+        let mut new_capacity: uint32_t = (*self_0).capacity * 2 as libc::c_int as uint32_t;
+        if new_capacity < 8 as libc::c_int as uint32_t {
+            new_capacity = 8 as libc::c_int as uint32_t;
+        }
+        if new_capacity < new_size {
+            new_capacity = new_size;
+        }
+        _array__reserve(self_0, element_size, new_capacity);
+    }
 }
 #[inline]
 unsafe extern "C" fn _array__splice(
@@ -311,57 +334,37 @@ unsafe extern "C" fn _array__splice(
     } else {
         panic!();
     }
+    'c_6204: {
+        if old_end <= (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
     _array__reserve(self_0, element_size, new_size);
     let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
     if (*self_0).size > old_end {
         std::ptr::copy(
-            contents.offset((old_end as libc::c_ulong).wrapping_mul(element_size) as isize)
-                as *const libc::c_void,
-            contents.offset((new_end as libc::c_ulong).wrapping_mul(element_size) as isize)
-                as *mut libc::c_void,
-            ((((*self_0).size).wrapping_sub(old_end) as libc::c_ulong).wrapping_mul(element_size))
-                as usize,
+            contents.offset((old_end as size_t * element_size) as isize) as *const libc::c_void,
+            contents.offset((new_end as size_t * element_size) as isize) as *mut libc::c_void,
+            (((*self_0).size).wrapping_sub(old_end) as size_t * element_size) as usize,
         );
     }
-    if new_count > 0 as libc::c_int as libc::c_uint {
+    if new_count > 0 as libc::c_int as uint32_t {
         if !elements.is_null() {
             std::ptr::copy_nonoverlapping(
                 elements,
-                contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-                    as *mut libc::c_void,
-                (new_count as libc::c_ulong).wrapping_mul(element_size),
+                contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
+                new_count as size_t * element_size,
             );
         } else {
             std::ptr::write_bytes(
-                contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-                    as *mut libc::c_void,
+                contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
                 (0 as libc::c_int) as u8,
-                ((new_count as libc::c_ulong).wrapping_mul(element_size)) as usize,
+                (new_count as size_t * element_size) as usize,
             );
         }
     }
-    (*self_0).size = ((*self_0).size as libc::c_uint)
-        .wrapping_add(new_count.wrapping_sub(old_count)) as uint32_t
-        as uint32_t;
-}
-#[inline]
-unsafe extern "C" fn _array__grow(
-    mut self_0: *mut Array,
-    mut count: uint32_t,
-    mut element_size: size_t,
-) {
-    let mut new_size: uint32_t = ((*self_0).size).wrapping_add(count);
-    if new_size > (*self_0).capacity {
-        let mut new_capacity: uint32_t =
-            ((*self_0).capacity).wrapping_mul(2 as libc::c_int as libc::c_uint);
-        if new_capacity < 8 as libc::c_int as libc::c_uint {
-            new_capacity = 8 as libc::c_int as uint32_t;
-        }
-        if new_capacity < new_size {
-            new_capacity = new_size;
-        }
-        _array__reserve(self_0, element_size, new_capacity);
-    }
+    (*self_0).size = ((*self_0).size).wrapping_add(new_count.wrapping_sub(old_count));
 }
 #[inline]
 unsafe extern "C" fn duration_from_micros(mut micros: uint64_t) -> TSDuration {
@@ -384,17 +387,17 @@ unsafe extern "C" fn clock_null() -> TSClock {
 #[inline]
 unsafe extern "C" fn clock_after(mut base: TSClock, mut duration: TSDuration) -> TSClock {
     let mut result: TSClock = base;
-    result.tv_sec = (result.tv_sec as libc::c_ulong)
-        .wrapping_add((duration as usize).wrapping_div(1000000 as libc::c_int as libc::c_ulong))
+    result.tv_sec = (result.tv_sec as TSDuration)
+        .wrapping_add((duration as u64) / 1000000 as libc::c_int as TSDuration)
         as __time_t as __time_t;
-    result.tv_nsec = (result.tv_nsec as libc::c_ulong).wrapping_add(
-        (duration as usize)
-            .wrapping_rem(1000000 as libc::c_int as libc::c_ulong)
-            .wrapping_mul(1000 as libc::c_int as libc::c_ulong),
+    result.tv_nsec = (result.tv_nsec as TSDuration).wrapping_add(
+        (duration as u64) % 1000000 as libc::c_int as TSDuration
+            * 1000 as libc::c_int as TSDuration,
     ) as __syscall_slong_t as __syscall_slong_t;
-    if result.tv_nsec >= 1000000000 as libc::c_int as libc::c_long {
-        result.tv_nsec -= 1000000000 as libc::c_int as libc::c_long;
+    if result.tv_nsec >= 1000000000 as libc::c_int as __syscall_slong_t {
+        result.tv_nsec -= 1000000000 as libc::c_int as __syscall_slong_t;
         result.tv_sec += 1;
+        result.tv_sec;
     }
     return result;
 }
@@ -413,18 +416,28 @@ unsafe extern "C" fn clock_is_gt(mut self_0: TSClock, mut other: TSClock) -> boo
     return self_0.tv_nsec > other.tv_nsec;
 }
 #[inline]
-unsafe extern "C" fn ts_subtree_leaf_parse_state(mut self_0: Subtree) -> TSStateId {
-    if (self_0.data).is_inline() {
-        return self_0.data.parse_state;
-    }
-    if (*self_0.ptr).child_count == 0 as libc::c_int as libc::c_uint {
-        return (*self_0.ptr).parse_state;
-    }
-    return (*self_0.ptr)
-        .c2rust_unnamed
-        .c2rust_unnamed
-        .first_leaf
-        .parse_state;
+unsafe extern "C" fn ts_subtree_symbol(mut self_0: Subtree) -> TSSymbol {
+    return (if (self_0.data).is_inline() as libc::c_int != 0 {
+        self_0.data.symbol as libc::c_int
+    } else {
+        (*self_0.ptr).symbol as libc::c_int
+    }) as TSSymbol;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_extra(mut self_0: Subtree) -> bool {
+    return if (self_0.data).is_inline() as libc::c_int != 0 {
+        (self_0.data).extra() as libc::c_int
+    } else {
+        (*self_0.ptr).extra() as libc::c_int
+    } != 0;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_has_changes(mut self_0: Subtree) -> bool {
+    return if (self_0.data).is_inline() as libc::c_int != 0 {
+        (self_0.data).has_changes() as libc::c_int
+    } else {
+        (*self_0.ptr).has_changes() as libc::c_int
+    } != 0;
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_is_fragile(mut self_0: Subtree) -> bool {
@@ -436,12 +449,18 @@ unsafe extern "C" fn ts_subtree_is_fragile(mut self_0: Subtree) -> bool {
     } != 0;
 }
 #[inline]
-unsafe extern "C" fn ts_subtree_has_changes(mut self_0: Subtree) -> bool {
-    return if (self_0.data).is_inline() as libc::c_int != 0 {
-        (self_0.data).has_changes() as libc::c_int
-    } else {
-        (*self_0.ptr).has_changes() as libc::c_int
-    } != 0;
+unsafe extern "C" fn ts_subtree_leaf_parse_state(mut self_0: Subtree) -> TSStateId {
+    if (self_0.data).is_inline() {
+        return self_0.data.parse_state;
+    }
+    if (*self_0.ptr).child_count == 0 as libc::c_int as uint32_t {
+        return (*self_0.ptr).parse_state;
+    }
+    return (*self_0.ptr)
+        .c2rust_unnamed
+        .c2rust_unnamed
+        .first_leaf
+        .parse_state;
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_to_mut_unsafe(mut self_0: Subtree) -> MutableSubtree {
@@ -460,12 +479,20 @@ unsafe extern "C" fn ts_subtree_to_mut_unsafe(mut self_0: Subtree) -> MutableSub
     return result;
 }
 #[inline]
-unsafe extern "C" fn ts_subtree_is_keyword(mut self_0: Subtree) -> bool {
-    return if (self_0.data).is_inline() as libc::c_int != 0 {
-        (self_0.data).is_keyword() as libc::c_int
-    } else {
-        (*self_0.ptr).is_keyword() as libc::c_int
-    } != 0;
+unsafe extern "C" fn ts_subtree_from_mut(mut self_0: MutableSubtree) -> Subtree {
+    let mut result: Subtree = Subtree {
+        data: SubtreeInlineData {
+            is_inline_visible_named_extra_has_changes_is_missing_is_keyword: [0; 1],
+            symbol: 0,
+            parse_state: 0,
+            padding_columns: 0,
+            padding_rows_lookahead_bytes: [0; 1],
+            padding_bytes: 0,
+            size_bytes: 0,
+        },
+    };
+    result.data = self_0.data;
+    return result;
 }
 #[inline]
 unsafe extern "C" fn length_zero() -> Length {
@@ -485,33 +512,12 @@ unsafe extern "C" fn length_zero() -> Length {
     return result;
 }
 #[inline]
-unsafe extern "C" fn point_sub(mut a: TSPoint, mut b: TSPoint) -> TSPoint {
-    if a.row > b.row {
-        return point__new((a.row).wrapping_sub(b.row), a.column);
-    } else {
-        return point__new(
-            0 as libc::c_int as libc::c_uint,
-            (a.column).wrapping_sub(b.column),
-        );
-    };
-}
-#[inline]
-unsafe extern "C" fn length_sub(mut len1: Length, mut len2: Length) -> Length {
-    let mut result: Length = Length {
-        bytes: 0,
-        extent: TSPoint { row: 0, column: 0 },
-    };
-    result.bytes = (len1.bytes).wrapping_sub(len2.bytes);
-    result.extent = point_sub(len1.extent, len2.extent);
-    return result;
-}
-#[inline]
-unsafe extern "C" fn ts_subtree_lookahead_bytes(mut self_0: Subtree) -> uint32_t {
+unsafe extern "C" fn ts_subtree_is_keyword(mut self_0: Subtree) -> bool {
     return if (self_0.data).is_inline() as libc::c_int != 0 {
-        (self_0.data).lookahead_bytes() as libc::c_uint
+        (self_0.data).is_keyword() as libc::c_int
     } else {
-        (*self_0.ptr).lookahead_bytes
-    };
+        (*self_0.ptr).is_keyword() as libc::c_int
+    } != 0;
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_has_external_tokens(mut self_0: Subtree) -> bool {
@@ -520,44 +526,6 @@ unsafe extern "C" fn ts_subtree_has_external_tokens(mut self_0: Subtree) -> bool
     } else {
         (*self_0.ptr).has_external_tokens() as libc::c_int
     } != 0;
-}
-#[inline]
-unsafe extern "C" fn ts_subtree_from_mut(mut self_0: MutableSubtree) -> Subtree {
-    let mut result: Subtree = Subtree {
-        data: SubtreeInlineData {
-            is_inline_visible_named_extra_has_changes_is_missing_is_keyword: [0; 1],
-            symbol: 0,
-            parse_state: 0,
-            padding_columns: 0,
-            padding_rows_lookahead_bytes: [0; 1],
-            padding_bytes: 0,
-            size_bytes: 0,
-        },
-    };
-    result.data = self_0.data;
-    return result;
-}
-#[inline]
-unsafe extern "C" fn ts_subtree_leaf_symbol(mut self_0: Subtree) -> TSSymbol {
-    if (self_0.data).is_inline() {
-        return self_0.data.symbol as TSSymbol;
-    }
-    if (*self_0.ptr).child_count == 0 as libc::c_int as libc::c_uint {
-        return (*self_0.ptr).symbol;
-    }
-    return (*self_0.ptr)
-        .c2rust_unnamed
-        .c2rust_unnamed
-        .first_leaf
-        .symbol;
-}
-#[inline]
-unsafe extern "C" fn ts_subtree_symbol(mut self_0: Subtree) -> TSSymbol {
-    return (if (self_0.data).is_inline() as libc::c_int != 0 {
-        self_0.data.symbol as libc::c_int
-    } else {
-        (*self_0.ptr).symbol as libc::c_int
-    }) as TSSymbol;
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_set_extra(mut self_0: *mut MutableSubtree, mut is_extra: bool) {
@@ -570,14 +538,6 @@ unsafe extern "C" fn ts_subtree_set_extra(mut self_0: *mut MutableSubtree, mut i
 #[inline]
 unsafe extern "C" fn ts_subtree_total_size(mut self_0: Subtree) -> Length {
     return length_add(ts_subtree_padding(self_0), ts_subtree_size(self_0));
-}
-#[inline]
-unsafe extern "C" fn ts_subtree_parse_state(mut self_0: Subtree) -> TSStateId {
-    return (if (self_0.data).is_inline() as libc::c_int != 0 {
-        self_0.data.parse_state as libc::c_int
-    } else {
-        (*self_0.ptr).parse_state as libc::c_int
-    }) as TSStateId;
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_size(mut self_0: Subtree) -> Length {
@@ -632,13 +592,37 @@ unsafe extern "C" fn length_add(mut len1: Length, mut len2: Length) -> Length {
     return result;
 }
 #[inline]
-unsafe extern "C" fn ts_subtree_is_error(mut self_0: Subtree) -> bool {
-    return ts_subtree_symbol(self_0) as libc::c_int
-        == -(1 as libc::c_int) as TSSymbol as libc::c_int;
+unsafe extern "C" fn point_sub(mut a: TSPoint, mut b: TSPoint) -> TSPoint {
+    if a.row > b.row {
+        return point__new((a.row).wrapping_sub(b.row), a.column);
+    } else {
+        return point__new(
+            0 as libc::c_int as libc::c_uint,
+            (a.column).wrapping_sub(b.column),
+        );
+    };
+}
+#[inline]
+unsafe extern "C" fn length_sub(mut len1: Length, mut len2: Length) -> Length {
+    let mut result: Length = Length {
+        bytes: 0,
+        extent: TSPoint { row: 0, column: 0 },
+    };
+    result.bytes = (len1.bytes).wrapping_sub(len2.bytes);
+    result.extent = point_sub(len1.extent, len2.extent);
+    return result;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_lookahead_bytes(mut self_0: Subtree) -> uint32_t {
+    return if (self_0.data).is_inline() as libc::c_int != 0 {
+        (self_0.data).lookahead_bytes() as uint32_t
+    } else {
+        (*self_0.ptr).lookahead_bytes
+    };
 }
 #[inline]
 unsafe extern "C" fn point_add(mut a: TSPoint, mut b: TSPoint) -> TSPoint {
-    if b.row > 0 as libc::c_int as libc::c_uint {
+    if b.row > 0 as libc::c_int as uint32_t {
         return point__new((a.row).wrapping_add(b.row), b.column);
     } else {
         return point__new(a.row, (a.column).wrapping_add(b.column));
@@ -665,7 +649,7 @@ unsafe extern "C" fn ts_subtree_error_cost(mut self_0: Subtree) -> uint32_t {
         return (110 as libc::c_int + 500 as libc::c_int) as uint32_t;
     } else {
         return if (self_0.data).is_inline() as libc::c_int != 0 {
-            0 as libc::c_int as libc::c_uint
+            0 as libc::c_int as uint32_t
         } else {
             (*self_0.ptr).error_cost
         };
@@ -682,7 +666,7 @@ unsafe extern "C" fn ts_subtree_missing(mut self_0: Subtree) -> bool {
 #[inline]
 unsafe extern "C" fn ts_subtree_dynamic_precedence(mut self_0: Subtree) -> int32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0
-        || (*self_0.ptr).child_count == 0 as libc::c_int as libc::c_uint
+        || (*self_0.ptr).child_count == 0 as libc::c_int as uint32_t
     {
         0 as libc::c_int
     } else {
@@ -693,24 +677,38 @@ unsafe extern "C" fn ts_subtree_dynamic_precedence(mut self_0: Subtree) -> int32
     };
 }
 #[inline]
+unsafe extern "C" fn ts_subtree_leaf_symbol(mut self_0: Subtree) -> TSSymbol {
+    if (self_0.data).is_inline() {
+        return self_0.data.symbol as TSSymbol;
+    }
+    if (*self_0.ptr).child_count == 0 as libc::c_int as uint32_t {
+        return (*self_0.ptr).symbol;
+    }
+    return (*self_0.ptr)
+        .c2rust_unnamed
+        .c2rust_unnamed
+        .first_leaf
+        .symbol;
+}
+#[inline]
 unsafe extern "C" fn ts_subtree_child_count(mut self_0: Subtree) -> uint32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0 {
-        0 as libc::c_int as libc::c_uint
+        0 as libc::c_int as uint32_t
     } else {
         (*self_0.ptr).child_count
     };
 }
 #[inline]
-unsafe extern "C" fn ts_subtree_extra(mut self_0: Subtree) -> bool {
-    return if (self_0.data).is_inline() as libc::c_int != 0 {
-        (self_0.data).extra() as libc::c_int
-    } else {
-        (*self_0.ptr).extra() as libc::c_int
-    } != 0;
-}
-#[inline]
 unsafe extern "C" fn ts_subtree_is_eof(mut self_0: Subtree) -> bool {
     return ts_subtree_symbol(self_0) as libc::c_int == 0 as libc::c_int;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_parse_state(mut self_0: Subtree) -> TSStateId {
+    return (if (self_0.data).is_inline() as libc::c_int != 0 {
+        self_0.data.parse_state as libc::c_int
+    } else {
+        (*self_0.ptr).parse_state as libc::c_int
+    }) as TSStateId;
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_has_external_scanner_state_change(mut self_0: Subtree) -> bool {
@@ -719,6 +717,11 @@ unsafe extern "C" fn ts_subtree_has_external_scanner_state_change(mut self_0: Su
     } else {
         (*self_0.ptr).has_external_scanner_state_change() as libc::c_int
     } != 0;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_is_error(mut self_0: Subtree) -> bool {
+    return ts_subtree_symbol(self_0) as libc::c_int
+        == -(1 as libc::c_int) as TSSymbol as libc::c_int;
 }
 #[inline]
 unsafe extern "C" fn ts_language_actions(
@@ -748,7 +751,7 @@ unsafe extern "C" fn ts_language_has_reduce_action(
         is_reusable: false,
     };
     ts_language_table_entry(self_0, state, symbol, &mut entry);
-    return entry.action_count > 0 as libc::c_int as libc::c_uint
+    return entry.action_count > 0 as libc::c_int as uint32_t
         && (*(entry.actions).offset(0 as libc::c_int as isize)).type_ as libc::c_int
             == TSParseActionTypeReduce as libc::c_int;
 }
@@ -758,9 +761,9 @@ unsafe extern "C" fn ts_language_lookup(
     mut state: TSStateId,
     mut symbol: TSSymbol,
 ) -> uint16_t {
-    if state as libc::c_uint >= (*self_0).large_state_count {
+    if state as uint32_t >= (*self_0).large_state_count {
         let mut index: uint32_t = *((*self_0).small_parse_table_map)
-            .offset((state as libc::c_uint).wrapping_sub((*self_0).large_state_count) as isize);
+            .offset((state as uint32_t).wrapping_sub((*self_0).large_state_count) as isize);
         let mut data: *const uint16_t =
             &*((*self_0).small_parse_table).offset(index as isize) as *const uint16_t;
         let fresh0 = data;
@@ -782,15 +785,15 @@ unsafe extern "C" fn ts_language_lookup(
                     return section_value;
                 }
                 j = j.wrapping_add(1);
+                j;
             }
             i = i.wrapping_add(1);
+            i;
         }
         return 0 as libc::c_int as uint16_t;
     } else {
         return *((*self_0).parse_table).offset(
-            (state as libc::c_uint)
-                .wrapping_mul((*self_0).symbol_count)
-                .wrapping_add(symbol as libc::c_uint) as isize,
+            (state as uint32_t * (*self_0).symbol_count).wrapping_add(symbol as uint32_t) as isize,
         );
     };
 }
@@ -810,9 +813,8 @@ unsafe extern "C" fn ts_language_enabled_external_tokens(
     if external_scanner_state == 0 as libc::c_int as libc::c_uint {
         return 0 as *const bool;
     } else {
-        return ((*self_0).external_scanner.states).offset(
-            ((*self_0).external_token_count).wrapping_mul(external_scanner_state) as isize,
-        );
+        return ((*self_0).external_scanner.states)
+            .offset(((*self_0).external_token_count).wrapping_mul(external_scanner_state) as isize);
     };
 }
 #[inline]
@@ -829,6 +831,7 @@ unsafe extern "C" fn ts_reduce_action_set_add(
             return;
         }
         i = i.wrapping_add(1);
+        i;
     }
     _array__grow(
         self_0 as *mut Array,
@@ -867,9 +870,9 @@ unsafe extern "C" fn reusable_node_clear(mut self_0: *mut ReusableNode) {
 }
 #[inline]
 unsafe extern "C" fn reusable_node_tree(mut self_0: *mut ReusableNode) -> Subtree {
-    return if (*self_0).stack.size > 0 as libc::c_int as libc::c_uint {
+    return if (*self_0).stack.size > 0 as libc::c_int as uint32_t {
         (*((*self_0).stack.contents)
-            .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize))
+            .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize))
         .tree
     } else {
         Subtree {
@@ -879,9 +882,9 @@ unsafe extern "C" fn reusable_node_tree(mut self_0: *mut ReusableNode) -> Subtre
 }
 #[inline]
 unsafe extern "C" fn reusable_node_byte_offset(mut self_0: *mut ReusableNode) -> uint32_t {
-    return if (*self_0).stack.size > 0 as libc::c_int as libc::c_uint {
+    return if (*self_0).stack.size > 0 as libc::c_int as uint32_t {
         (*((*self_0).stack.contents)
-            .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize))
+            .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize))
         .byte_offset
     } else {
         4294967295 as libc::c_uint
@@ -893,13 +896,19 @@ unsafe extern "C" fn reusable_node_delete(mut self_0: *mut ReusableNode) {
 }
 #[inline]
 unsafe extern "C" fn reusable_node_advance(mut self_0: *mut ReusableNode) {
-    if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) < (*self_0).stack.size
-    {
+    if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size {
     } else {
         panic!();
     }
+    'c_11419: {
+        if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size
+        {
+        } else {
+            panic!();
+        }
+    };
     let mut last_entry: StackEntry = *(&mut *((*self_0).stack.contents)
-        .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+        .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
         as *mut StackEntry);
     let mut byte_offset: uint32_t =
         (last_entry.byte_offset).wrapping_add(ts_subtree_total_bytes(last_entry.tree));
@@ -922,18 +931,25 @@ unsafe extern "C" fn reusable_node_advance(mut self_0: *mut ReusableNode) {
         (*self_0).stack.size = ((*self_0).stack.size).wrapping_sub(1);
         let mut popped_entry: StackEntry =
             *((*self_0).stack.contents).offset((*self_0).stack.size as isize);
-        next_index = (popped_entry.child_index).wrapping_add(1 as libc::c_int as libc::c_uint);
-        if (*self_0).stack.size == 0 as libc::c_int as libc::c_uint {
+        next_index = (popped_entry.child_index).wrapping_add(1 as libc::c_int as uint32_t);
+        if (*self_0).stack.size == 0 as libc::c_int as uint32_t {
             return;
         }
-        if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
-            < (*self_0).stack.size
+        if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size
         {
         } else {
             panic!();
         }
+        'c_11594: {
+            if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t)
+                < (*self_0).stack.size
+            {
+            } else {
+                panic!();
+            }
+        };
         tree = (*(&mut *((*self_0).stack.contents)
-            .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+            .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
             as *mut StackEntry))
             .tree;
         if !(ts_subtree_child_count(tree) <= next_index) {
@@ -963,15 +979,21 @@ unsafe extern "C" fn reusable_node_advance(mut self_0: *mut ReusableNode) {
 }
 #[inline]
 unsafe extern "C" fn reusable_node_descend(mut self_0: *mut ReusableNode) -> bool {
-    if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) < (*self_0).stack.size
-    {
+    if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size {
     } else {
         panic!();
     }
+    'c_7895: {
+        if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size
+        {
+        } else {
+            panic!();
+        }
+    };
     let mut last_entry: StackEntry = *(&mut *((*self_0).stack.contents)
-        .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+        .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
         as *mut StackEntry);
-    if ts_subtree_child_count(last_entry.tree) > 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_child_count(last_entry.tree) > 0 as libc::c_int as uint32_t {
         _array__grow(
             &mut (*self_0).stack as *mut C2RustUnnamed_7 as *mut Array,
             1 as libc::c_int as uint32_t,
@@ -1067,6 +1089,7 @@ unsafe extern "C" fn ts_parser__log(mut self_0: *mut TSParser) {
             }
             fputc(*chr as libc::c_int, (*self_0).dot_graph_file);
             chr = chr.offset(1);
+            chr;
         }
         fwrite!((*self_0).dot_graph_file, "\"\n}}\n\n",).unwrap_or(usize::MAX) as os::raw::c_int;
     }
@@ -1092,6 +1115,12 @@ unsafe extern "C" fn ts_parser__breakdown_top_of_stack(
             } else {
                 panic!();
             }
+            'c_10727: {
+                if (0 as libc::c_int as uint32_t) < slice.subtrees.size {
+                } else {
+                    panic!();
+                }
+            };
             let mut parent: Subtree = *(&mut *(slice.subtrees.contents)
                 .offset(0 as libc::c_int as isize)
                 as *mut Subtree);
@@ -1104,7 +1133,7 @@ unsafe extern "C" fn ts_parser__breakdown_top_of_stack(
                     (parent.ptr as *mut Subtree).offset(-((*parent.ptr).child_count as isize))
                 }
                 .offset(j as isize);
-                pending = ts_subtree_child_count(child) > 0 as libc::c_int as libc::c_uint;
+                pending = ts_subtree_child_count(child) > 0 as libc::c_int as uint32_t;
                 if ts_subtree_is_error(child) {
                     state = 0 as libc::c_int as TSStateId;
                 } else if !ts_subtree_extra(child) {
@@ -1114,6 +1143,7 @@ unsafe extern "C" fn ts_parser__breakdown_top_of_stack(
                 ts_subtree_retain(child);
                 ts_stack_push((*self_0).stack, slice.version, child, pending, state);
                 j = j.wrapping_add(1);
+                j;
             }
             let mut j_0: uint32_t = 1 as libc::c_int as uint32_t;
             while j_0 < slice.subtrees.size {
@@ -1126,6 +1156,7 @@ unsafe extern "C" fn ts_parser__breakdown_top_of_stack(
                     state,
                 );
                 j_0 = j_0.wrapping_add(1);
+                j_0;
             }
             ts_subtree_release(&mut (*self_0).tree_pool, parent);
             _array__delete(&mut slice.subtrees as *mut SubtreeArray as *mut Array);
@@ -1155,6 +1186,7 @@ unsafe extern "C" fn ts_parser__breakdown_top_of_stack(
                 );
             }
             i = i.wrapping_add(1);
+            i;
         }
         if !pending {
             break;
@@ -1170,7 +1202,7 @@ unsafe extern "C" fn ts_parser__breakdown_lookahead(
 ) {
     let mut did_descend: bool = 0 as libc::c_int != 0;
     let mut tree: Subtree = reusable_node_tree(reusable_node);
-    while ts_subtree_child_count(tree) > 0 as libc::c_int as libc::c_uint
+    while ts_subtree_child_count(tree) > 0 as libc::c_int as uint32_t
         && ts_subtree_parse_state(tree) as libc::c_int != state as libc::c_int
     {
         if ((*self_0).lexer.logger.log).is_some() || !((*self_0).dot_graph_file).is_null() {
@@ -1306,6 +1338,7 @@ unsafe extern "C" fn ts_parser__better_version_exists(
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return 0 as libc::c_int != 0;
 }
@@ -1374,11 +1407,22 @@ unsafe extern "C" fn ts_parser__external_scanner_serialize(
             ((*self_0).lexer.debug_buffer).as_mut_ptr(),
         );
     } else {
-        return ((*(*self_0).language).external_scanner.serialize)
+        let mut length: uint32_t = ((*(*self_0).language).external_scanner.serialize)
             .expect("non-null function pointer")(
             (*self_0).external_scanner_payload,
             ((*self_0).lexer.debug_buffer).as_mut_ptr(),
         );
+        if length <= 1024 as libc::c_int as uint32_t {
+        } else {
+            panic!();
+        }
+        'c_13717: {
+            if length <= 1024 as libc::c_int as uint32_t {
+            } else {
+                panic!();
+            }
+        };
+        return length;
     };
 }
 unsafe extern "C" fn ts_parser__external_scanner_deserialize(
@@ -1422,8 +1466,7 @@ unsafe extern "C" fn ts_parser__external_scanner_scan(
         let mut result: bool = ts_wasm_store_call_scanner_scan(
             (*self_0).wasm_store,
             (*self_0).external_scanner_payload as uintptr_t as uint32_t,
-            (external_lex_state as libc::c_uint)
-                .wrapping_mul((*(*self_0).language).external_token_count),
+            external_lex_state as uint32_t * (*(*self_0).language).external_token_count,
         );
         if ts_wasm_store_has_error((*self_0).wasm_store) {
             (*self_0).has_scanner_error = 1 as libc::c_int != 0;
@@ -1455,7 +1498,7 @@ unsafe extern "C" fn ts_parser__can_reuse_first_leaf(
     if current_lex_mode.lex_state as libc::c_int == -(1 as libc::c_int) as uint16_t as libc::c_int {
         return 0 as libc::c_int != 0;
     }
-    if (*table_entry).action_count > 0 as libc::c_int as libc::c_uint
+    if (*table_entry).action_count > 0 as libc::c_int as uint32_t
         && if std::slice::from_raw_parts(
             &mut leaf_lex_mode as *mut TSLexMode as *const u8,
             ::core::mem::size_of::<TSLexMode>() as libc::c_ulong,
@@ -1474,7 +1517,7 @@ unsafe extern "C" fn ts_parser__can_reuse_first_leaf(
     {
         return 1 as libc::c_int != 0;
     }
-    if (ts_subtree_size(tree)).bytes == 0 as libc::c_int as libc::c_uint
+    if (ts_subtree_size(tree)).bytes == 0 as libc::c_int as uint32_t
         && leaf_symbol as libc::c_int != 0 as libc::c_int
     {
         return 0 as libc::c_int != 0;
@@ -1780,6 +1823,7 @@ unsafe extern "C" fn ts_parser__lex(
                 }
             }
             i += 1;
+            i;
         }
         snwrite!(
             buf.offset(off as isize),
@@ -1801,7 +1845,7 @@ unsafe extern "C" fn ts_parser__get_cached_token(
 ) -> Subtree {
     let mut cache: *mut TokenCache = &mut (*self_0).token_cache;
     if !((*cache).token.ptr).is_null()
-        && (*cache).byte_index as libc::c_ulong == position
+        && (*cache).byte_index as size_t == position
         && ts_subtree_external_scanner_state_eq((*cache).last_external_token, last_external_token)
             as libc::c_int
             != 0
@@ -2131,7 +2175,7 @@ unsafe extern "C" fn ts_parser__select_tree(
         }
         return 0 as libc::c_int != 0;
     }
-    if ts_subtree_error_cost(left) > 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_error_cost(left) > 0 as libc::c_int as uint32_t {
         return 1 as libc::c_int != 0;
     }
     let mut comparison: libc::c_int = ts_subtree_compare(left, right, &mut (*self_0).tree_pool);
@@ -2229,7 +2273,7 @@ unsafe extern "C" fn ts_parser__shift(
     mut lookahead: Subtree,
     mut extra: bool,
 ) {
-    let mut is_leaf: bool = ts_subtree_child_count(lookahead) == 0 as libc::c_int as libc::c_uint;
+    let mut is_leaf: bool = ts_subtree_child_count(lookahead) == 0 as libc::c_int as uint32_t;
     let mut subtree_to_push: Subtree = lookahead;
     if extra as libc::c_int != ts_subtree_extra(lookahead) as libc::c_int
         && is_leaf as libc::c_int != 0
@@ -2268,14 +2312,16 @@ unsafe extern "C" fn ts_parser__reduce(
             ts_stack_remove_version((*self_0).stack, slice_version);
             ts_subtree_array_delete(&mut (*self_0).tree_pool, &mut slice.subtrees);
             removed_version_count = removed_version_count.wrapping_add(1);
-            while i.wrapping_add(1 as libc::c_int as libc::c_uint) < pop.size {
-                let mut next_slice: StackSlice = *(pop.contents)
-                    .offset(i.wrapping_add(1 as libc::c_int as libc::c_uint) as isize);
+            removed_version_count;
+            while i.wrapping_add(1 as libc::c_int as uint32_t) < pop.size {
+                let mut next_slice: StackSlice =
+                    *(pop.contents).offset(i.wrapping_add(1 as libc::c_int as uint32_t) as isize);
                 if next_slice.version != slice.version {
                     break;
                 }
                 ts_subtree_array_delete(&mut (*self_0).tree_pool, &mut next_slice.subtrees);
                 i = i.wrapping_add(1);
+                i;
             }
         } else {
             let mut children: SubtreeArray = slice.subtrees;
@@ -2286,13 +2332,14 @@ unsafe extern "C" fn ts_parser__reduce(
                 production_id as libc::c_uint,
                 (*self_0).language,
             );
-            while i.wrapping_add(1 as libc::c_int as libc::c_uint) < pop.size {
-                let mut next_slice_0: StackSlice = *(pop.contents)
-                    .offset(i.wrapping_add(1 as libc::c_int as libc::c_uint) as isize);
+            while i.wrapping_add(1 as libc::c_int as uint32_t) < pop.size {
+                let mut next_slice_0: StackSlice =
+                    *(pop.contents).offset(i.wrapping_add(1 as libc::c_int as uint32_t) as isize);
                 if next_slice_0.version != slice.version {
                     break;
                 }
                 i = i.wrapping_add(1);
+                i;
                 let mut next_slice_children: SubtreeArray = next_slice_0.subtrees;
                 ts_subtree_array_remove_trailing_extras(
                     &mut next_slice_children,
@@ -2332,8 +2379,8 @@ unsafe extern "C" fn ts_parser__reduce(
                 (*parent.ptr).set_extra(1 as libc::c_int != 0);
             }
             if is_fragile as libc::c_int != 0
-                || pop.size > 1 as libc::c_int as libc::c_uint
-                || initial_version_count > 1 as libc::c_int as libc::c_uint
+                || pop.size > 1 as libc::c_int as uint32_t
+                || initial_version_count > 1 as libc::c_int as uint32_t
             {
                 (*parent.ptr).set_fragile_left(1 as libc::c_int != 0);
                 (*parent.ptr).set_fragile_right(1 as libc::c_int != 0);
@@ -2363,19 +2410,23 @@ unsafe extern "C" fn ts_parser__reduce(
                     next_state,
                 );
                 j = j.wrapping_add(1);
+                j;
             }
             let mut j_0: StackVersion = 0 as libc::c_int as StackVersion;
             while j_0 < slice_version {
                 if !(j_0 == version) {
                     if ts_stack_merge((*self_0).stack, j_0, slice_version) {
                         removed_version_count = removed_version_count.wrapping_add(1);
+                        removed_version_count;
                         break;
                     }
                 }
                 j_0 = j_0.wrapping_add(1);
+                j_0;
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return if ts_stack_version_count((*self_0).stack) > initial_version_count {
         initial_version_count
@@ -2392,6 +2443,12 @@ unsafe extern "C" fn ts_parser__accept(
     } else {
         panic!();
     }
+    'c_6368: {
+        if ts_subtree_is_eof(lookahead) {
+        } else {
+            panic!();
+        }
+    };
     ts_stack_push(
         (*self_0).stack,
         version,
@@ -2406,14 +2463,20 @@ unsafe extern "C" fn ts_parser__accept(
         let mut root: Subtree = Subtree {
             ptr: 0 as *const SubtreeHeapData,
         };
-        let mut j: uint32_t = (trees.size).wrapping_sub(1 as libc::c_int as libc::c_uint);
-        while j.wrapping_add(1 as libc::c_int as libc::c_uint) > 0 as libc::c_int as libc::c_uint {
+        let mut j: uint32_t = (trees.size).wrapping_sub(1 as libc::c_int as uint32_t);
+        while j.wrapping_add(1 as libc::c_int as uint32_t) > 0 as libc::c_int as uint32_t {
             let mut tree: Subtree = *(trees.contents).offset(j as isize);
             if !ts_subtree_extra(tree) {
                 if !(tree.data).is_inline() {
                 } else {
                     panic!();
                 }
+                'c_6270: {
+                    if !(tree.data).is_inline() {
+                    } else {
+                        panic!();
+                    }
+                };
                 let mut child_count: uint32_t = ts_subtree_child_count(tree);
                 let mut children: *const Subtree = if (tree.data).is_inline() as libc::c_int != 0 {
                     0 as *mut Subtree
@@ -2424,6 +2487,7 @@ unsafe extern "C" fn ts_parser__accept(
                 while k < child_count {
                     ts_subtree_retain(*children.offset(k as isize));
                     k = k.wrapping_add(1);
+                    k;
                 }
                 _array__splice(
                     &mut trees as *mut SubtreeArray as *mut Array,
@@ -2443,13 +2507,21 @@ unsafe extern "C" fn ts_parser__accept(
                 break;
             } else {
                 j = j.wrapping_sub(1);
+                j;
             }
         }
         if !(root.ptr).is_null() {
         } else {
             panic!();
         }
+        'c_5832: {
+            if !(root.ptr).is_null() {
+            } else {
+                panic!();
+            }
+        };
         (*self_0).accept_count = ((*self_0).accept_count).wrapping_add(1);
+        (*self_0).accept_count;
         if !((*self_0).finished_tree.ptr).is_null() {
             if ts_parser__select_tree(self_0, (*self_0).finished_tree, root) {
                 ts_subtree_release(&mut (*self_0).tree_pool, (*self_0).finished_tree);
@@ -2461,6 +2533,7 @@ unsafe extern "C" fn ts_parser__accept(
             (*self_0).finished_tree = root;
         }
         i = i.wrapping_add(1);
+        i;
     }
     ts_stack_remove_version(
         (*self_0).stack,
@@ -2491,6 +2564,7 @@ unsafe extern "C" fn ts_parser__do_all_potential_reductions(
                 break;
             } else {
                 j = j.wrapping_add(1);
+                j;
             }
         }
         if !merged {
@@ -2540,8 +2614,10 @@ unsafe extern "C" fn ts_parser__do_all_potential_reductions(
                         _ => {}
                     }
                     j_0 = j_0.wrapping_add(1);
+                    j_0;
                 }
                 symbol = symbol.wrapping_add(1);
+                symbol;
             }
             let mut reduction_version: StackVersion = -(1 as libc::c_int) as StackVersion;
             let mut j_1: uint32_t = 0 as libc::c_int as uint32_t;
@@ -2559,6 +2635,7 @@ unsafe extern "C" fn ts_parser__do_all_potential_reductions(
                     0 as libc::c_int != 0,
                 );
                 j_1 = j_1.wrapping_add(1);
+                j_1;
             }
             if has_shift_action {
                 can_shift_lookahead_symbol = 1 as libc::c_int != 0;
@@ -2581,11 +2658,13 @@ unsafe extern "C" fn ts_parser__do_all_potential_reductions(
                         version = version_count;
                     } else {
                         version = version.wrapping_add(1);
+                        version;
                     }
                 }
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return can_shift_lookahead_symbol;
 }
@@ -2623,15 +2702,21 @@ unsafe extern "C" fn ts_parser__recover_to_state(
             );
         } else {
             let mut error_trees: SubtreeArray = ts_stack_pop_error((*self_0).stack, slice.version);
-            if error_trees.size > 0 as libc::c_int as libc::c_uint {
-                if error_trees.size == 1 as libc::c_int as libc::c_uint {
+            if error_trees.size > 0 as libc::c_int as uint32_t {
+                if error_trees.size == 1 as libc::c_int as uint32_t {
                 } else {
                     panic!();
                 }
+                'c_7109: {
+                    if error_trees.size == 1 as libc::c_int as uint32_t {
+                    } else {
+                        panic!();
+                    }
+                };
                 let mut error_tree: Subtree =
                     *(error_trees.contents).offset(0 as libc::c_int as isize);
                 let mut error_child_count: uint32_t = ts_subtree_child_count(error_tree);
-                if error_child_count > 0 as libc::c_int as libc::c_uint {
+                if error_child_count > 0 as libc::c_int as uint32_t {
                     _array__splice(
                         &mut slice.subtrees as *mut SubtreeArray as *mut Array,
                         ::core::mem::size_of::<Subtree>() as libc::c_ulong,
@@ -2649,6 +2734,7 @@ unsafe extern "C" fn ts_parser__recover_to_state(
                     while j < error_child_count {
                         ts_subtree_retain(*(slice.subtrees.contents).offset(j as isize));
                         j = j.wrapping_add(1);
+                        j;
                     }
                 }
                 ts_subtree_array_delete(&mut (*self_0).tree_pool, &mut error_trees);
@@ -2657,7 +2743,7 @@ unsafe extern "C" fn ts_parser__recover_to_state(
                 &mut slice.subtrees,
                 &mut (*self_0).trailing_extras,
             );
-            if slice.subtrees.size > 0 as libc::c_int as libc::c_uint {
+            if slice.subtrees.size > 0 as libc::c_int as uint32_t {
                 let mut error: Subtree = ts_subtree_new_error_node(
                     &mut slice.subtrees,
                     1 as libc::c_int != 0,
@@ -2684,10 +2770,12 @@ unsafe extern "C" fn ts_parser__recover_to_state(
                     goal_state,
                 );
                 j_0 = j_0.wrapping_add(1);
+                j_0;
             }
             previous_version = slice.version;
         }
         i = i.wrapping_add(1);
+        i;
     }
     return previous_version != -(1 as libc::c_int) as StackVersion;
 }
@@ -2712,6 +2800,7 @@ unsafe extern "C" fn ts_parser__recover(
                     let mut depth: libc::c_uint = entry.depth;
                     if node_count_since_error > 0 as libc::c_int as libc::c_uint {
                         depth = depth.wrapping_add(1);
+                        depth;
                     }
                     let mut would_merge: bool = 0 as libc::c_int != 0;
                     let mut j: libc::c_uint = 0 as libc::c_int as libc::c_uint;
@@ -2724,6 +2813,7 @@ unsafe extern "C" fn ts_parser__recover(
                             break;
                         } else {
                             j = j.wrapping_add(1);
+                            j;
                         }
                     }
                     if !would_merge {
@@ -2732,14 +2822,12 @@ unsafe extern "C" fn ts_parser__recover(
                                 (entry.depth).wrapping_mul(100 as libc::c_int as libc::c_uint),
                             )
                             .wrapping_add(
-                                (position.bytes)
-                                    .wrapping_sub(entry.position.bytes)
-                                    .wrapping_mul(1 as libc::c_int as libc::c_uint),
+                                (position.bytes).wrapping_sub(entry.position.bytes)
+                                    * 1 as libc::c_int as uint32_t,
                             )
                             .wrapping_add(
-                                (position.extent.row)
-                                    .wrapping_sub(entry.position.extent.row)
-                                    .wrapping_mul(30 as libc::c_int as libc::c_uint),
+                                (position.extent.row).wrapping_sub(entry.position.extent.row)
+                                    * 30 as libc::c_int as uint32_t,
                             );
                         if ts_parser__better_version_exists(
                             self_0,
@@ -2788,6 +2876,7 @@ unsafe extern "C" fn ts_parser__recover(
                 }
             }
             i = i.wrapping_add(1);
+            i;
         }
     }
     let mut i_0: libc::c_uint = previous_version_count;
@@ -2798,6 +2887,7 @@ unsafe extern "C" fn ts_parser__recover(
             ts_stack_remove_version((*self_0).stack, fresh23);
         }
         i_0 = i_0.wrapping_add(1);
+        i_0;
     }
     if did_recover as libc::c_int != 0
         && ts_stack_version_count((*self_0).stack) > MAX_VERSION_COUNT
@@ -2845,12 +2935,9 @@ unsafe extern "C" fn ts_parser__recover(
     }
     let mut new_cost_0: libc::c_uint = current_error_cost
         .wrapping_add(100 as libc::c_int as libc::c_uint)
+        .wrapping_add(ts_subtree_total_bytes(lookahead) * 1 as libc::c_int as uint32_t)
         .wrapping_add(
-            (ts_subtree_total_bytes(lookahead)).wrapping_mul(1 as libc::c_int as libc::c_uint),
-        )
-        .wrapping_add(
-            ((ts_subtree_total_size(lookahead)).extent.row)
-                .wrapping_mul(30 as libc::c_int as libc::c_uint),
+            (ts_subtree_total_size(lookahead)).extent.row * 30 as libc::c_int as uint32_t,
         );
     if ts_parser__better_version_exists(self_0, version, 0 as libc::c_int != 0, new_cost_0) {
         ts_stack_halt((*self_0).stack, version);
@@ -2922,7 +3009,7 @@ unsafe extern "C" fn ts_parser__recover(
     if node_count_since_error > 0 as libc::c_int as libc::c_uint {
         let mut pop: StackSliceArray =
             ts_stack_pop_count((*self_0).stack, version, 1 as libc::c_int as uint32_t);
-        if pop.size > 1 as libc::c_int as libc::c_uint {
+        if pop.size > 1 as libc::c_int as uint32_t {
             let mut i_1: libc::c_uint = 1 as libc::c_int as libc::c_uint;
             while i_1 < pop.size {
                 ts_subtree_array_delete(
@@ -2930,15 +3017,16 @@ unsafe extern "C" fn ts_parser__recover(
                     &mut (*(pop.contents).offset(i_1 as isize)).subtrees,
                 );
                 i_1 = i_1.wrapping_add(1);
+                i_1;
             }
             while ts_stack_version_count((*self_0).stack)
                 > ((*(pop.contents).offset(0 as libc::c_int as isize)).version)
-                    .wrapping_add(1 as libc::c_int as libc::c_uint)
+                    .wrapping_add(1 as libc::c_int as StackVersion)
             {
                 ts_stack_remove_version(
                     (*self_0).stack,
                     ((*(pop.contents).offset(0 as libc::c_int as isize)).version)
-                        .wrapping_add(1 as libc::c_int as libc::c_uint),
+                        .wrapping_add(1 as libc::c_int as StackVersion),
                 );
             }
         }
@@ -3064,6 +3152,7 @@ unsafe extern "C" fn ts_parser__handle_error(
                     }
                 }
                 missing_symbol = missing_symbol.wrapping_add(1);
+                missing_symbol;
             }
         }
         ts_stack_push(
@@ -3078,7 +3167,7 @@ unsafe extern "C" fn ts_parser__handle_error(
         v = if v == version {
             previous_version_count
         } else {
-            v.wrapping_add(1 as libc::c_int as libc::c_uint)
+            v.wrapping_add(1 as libc::c_int as StackVersion)
         };
     }
     let mut i: libc::c_uint = previous_version_count;
@@ -3088,10 +3177,17 @@ unsafe extern "C" fn ts_parser__handle_error(
         } else {
             panic!();
         }
+        'c_8189: {
+            if did_merge {
+            } else {
+                panic!();
+            }
+        };
         i = i.wrapping_add(1);
+        i;
     }
     ts_stack_record_summary((*self_0).stack, version, MAX_SUMMARY_DEPTH);
-    if ts_subtree_child_count(lookahead) > 0 as libc::c_int as libc::c_uint {
+    if ts_subtree_child_count(lookahead) > 0 as libc::c_int as uint32_t {
         ts_parser__breakdown_lookahead(
             self_0,
             &mut lookahead,
@@ -3230,7 +3326,7 @@ unsafe extern "C" fn ts_parser__advance(
                                 ts_parser__log(self_0);
                             }
                         }
-                        if ts_subtree_child_count(lookahead) > 0 as libc::c_int as libc::c_uint {
+                        if ts_subtree_child_count(lookahead) > 0 as libc::c_int as uint32_t {
                             ts_parser__breakdown_lookahead(
                                 self_0,
                                 &mut lookahead,
@@ -3258,7 +3354,7 @@ unsafe extern "C" fn ts_parser__advance(
                 }
                 1 => {
                     let mut is_fragile: bool =
-                        table_entry.action_count > 1 as libc::c_int as libc::c_uint;
+                        table_entry.action_count > 1 as libc::c_int as uint32_t;
                     let mut end_of_non_terminal_extra: bool = (lookahead.ptr).is_null();
                     if ((*self_0).lexer.logger.log).is_some()
                         || !((*self_0).dot_graph_file).is_null()
@@ -3307,7 +3403,7 @@ unsafe extern "C" fn ts_parser__advance(
                     return 1 as libc::c_int != 0;
                 }
                 3 => {
-                    if ts_subtree_child_count(lookahead) > 0 as libc::c_int as libc::c_uint {
+                    if ts_subtree_child_count(lookahead) > 0 as libc::c_int as uint32_t {
                         ts_parser__breakdown_lookahead(
                             self_0,
                             &mut lookahead,
@@ -3324,6 +3420,7 @@ unsafe extern "C" fn ts_parser__advance(
                 _ => {}
             }
             i = i.wrapping_add(1);
+            i;
         }
         if last_reduction_version != -(1 as libc::c_int) as StackVersion {
             ts_stack_renumber_version((*self_0).stack, last_reduction_version, version);
@@ -3364,7 +3461,7 @@ unsafe extern "C" fn ts_parser__advance(
                     (*(*self_0).language).keyword_capture_token,
                     &mut table_entry,
                 );
-                if table_entry.action_count > 0 as libc::c_int as libc::c_uint {
+                if table_entry.action_count > 0 as libc::c_int as uint32_t {
                     if ((*self_0).lexer.logger.log).is_some()
                         || !((*self_0).dot_graph_file).is_null()
                     {
@@ -3431,6 +3528,7 @@ unsafe extern "C" fn ts_parser__condense_stack(mut self_0: *mut TSParser) -> lib
         if ts_stack_is_halted((*self_0).stack, i) {
             ts_stack_remove_version((*self_0).stack, i);
             i = i.wrapping_sub(1);
+            i;
         } else {
             let mut status_i: ErrorStatus = ts_parser__version_status(self_0, i);
             if !status_i.is_in_error && status_i.cost < min_error_cost {
@@ -3444,12 +3542,14 @@ unsafe extern "C" fn ts_parser__condense_stack(mut self_0: *mut TSParser) -> lib
                         made_changes = 1 as libc::c_int != 0;
                         ts_stack_remove_version((*self_0).stack, i);
                         i = i.wrapping_sub(1);
+                        i;
                         j = i;
                     }
                     1 | 2 => {
                         if ts_stack_merge((*self_0).stack, j, i) {
                             made_changes = 1 as libc::c_int != 0;
                             i = i.wrapping_sub(1);
+                            i;
                             j = i;
                         }
                     }
@@ -3457,6 +3557,7 @@ unsafe extern "C" fn ts_parser__condense_stack(mut self_0: *mut TSParser) -> lib
                         made_changes = 1 as libc::c_int != 0;
                         if ts_stack_merge((*self_0).stack, j, i) {
                             i = i.wrapping_sub(1);
+                            i;
                             j = i;
                         } else {
                             ts_stack_swap_versions((*self_0).stack, i, j);
@@ -3466,20 +3567,24 @@ unsafe extern "C" fn ts_parser__condense_stack(mut self_0: *mut TSParser) -> lib
                         made_changes = 1 as libc::c_int != 0;
                         ts_stack_remove_version((*self_0).stack, j);
                         i = i.wrapping_sub(1);
+                        i;
                         j = j.wrapping_sub(1);
+                        j;
                     }
                     _ => {}
                 }
                 j = j.wrapping_add(1);
+                j;
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     while ts_stack_version_count((*self_0).stack) > MAX_VERSION_COUNT {
         ts_stack_remove_version((*self_0).stack, MAX_VERSION_COUNT);
         made_changes = 1 as libc::c_int != 0;
     }
-    if ts_stack_version_count((*self_0).stack) > 0 as libc::c_int as libc::c_uint {
+    if ts_stack_version_count((*self_0).stack) > 0 as libc::c_int as uint32_t {
         let mut has_unpaused_version: bool = 0 as libc::c_int != 0;
         let mut i_0: StackVersion = 0 as libc::c_int as StackVersion;
         let mut n: StackVersion = ts_stack_version_count((*self_0).stack);
@@ -3505,12 +3610,15 @@ unsafe extern "C" fn ts_parser__condense_stack(mut self_0: *mut TSParser) -> lib
                 } else {
                     ts_stack_remove_version((*self_0).stack, i_0);
                     i_0 = i_0.wrapping_sub(1);
+                    i_0;
                     n = n.wrapping_sub(1);
+                    n;
                 }
             } else {
                 has_unpaused_version = 1 as libc::c_int != 0;
             }
             i_0 = i_0.wrapping_add(1);
+            i_0;
         }
     }
     if made_changes {
@@ -3650,8 +3758,8 @@ pub unsafe extern "C" fn ts_parser_set_language(
     ts_language_delete((*self_0).language);
     (*self_0).language = 0 as *const TSLanguage;
     if !language.is_null() {
-        if (*language).version > 14 as libc::c_int as libc::c_uint
-            || (*language).version < 13 as libc::c_int as libc::c_uint
+        if (*language).version > 14 as libc::c_int as uint32_t
+            || (*language).version < 13 as libc::c_int as uint32_t
         {
             return 0 as libc::c_int != 0;
         }
@@ -3800,7 +3908,7 @@ pub unsafe extern "C" fn ts_parser_parse(
     } else {
         ts_parser__external_scanner_create(self_0);
         if (*self_0).has_scanner_error {
-            current_block = 16230954843571353507;
+            current_block = 12894208418235745730;
         } else {
             if !old_tree.is_null() {
                 ts_subtree_retain((*old_tree).root);
@@ -3852,6 +3960,7 @@ pub unsafe extern "C" fn ts_parser_parse(
                         ts_parser__log(self_0);
                     }
                     i = i.wrapping_add(1);
+                    i;
                 }
             } else {
                 reusable_node_clear(&mut (*self_0).reusable_node);
@@ -3886,8 +3995,7 @@ pub unsafe extern "C" fn ts_parser_parse(
                     if !(version < version_count) {
                         break;
                     }
-                    let mut allow_node_reuse: bool =
-                        version_count == 1 as libc::c_int as libc::c_uint;
+                    let mut allow_node_reuse: bool = version_count == 1 as libc::c_int as uint32_t;
                     while ts_stack_is_active((*self_0).stack, version) {
                         if ((*self_0).lexer.logger.log).is_some()
                             || !((*self_0).dot_graph_file).is_null()
@@ -3907,7 +4015,7 @@ pub unsafe extern "C" fn ts_parser_parse(
                         }
                         if !ts_parser__advance(self_0, version, allow_node_reuse) {
                             if (*self_0).has_scanner_error {
-                                current_block = 16230954843571353507;
+                                current_block = 12894208418235745730;
                                 break 's_222;
                             }
                             return 0 as *mut TSTree;
@@ -3925,7 +4033,7 @@ pub unsafe extern "C" fn ts_parser_parse(
                             }
                             position = (ts_stack_position((*self_0).stack, version)).bytes;
                             if !(position > last_position
-                                || version > 0 as libc::c_int as libc::c_uint
+                                || version > 0 as libc::c_int as StackVersion
                                     && position == last_position)
                             {
                                 continue;
@@ -3935,6 +4043,7 @@ pub unsafe extern "C" fn ts_parser_parse(
                         }
                     }
                     version = version.wrapping_add(1);
+                    version;
                 }
                 let mut min_error_cost: libc::c_uint = ts_parser__condense_stack(self_0);
                 if !((*self_0).finished_tree.ptr).is_null()
@@ -3956,20 +4065,27 @@ pub unsafe extern "C" fn ts_parser_parse(
                         }
                         (*self_0).included_range_difference_index =
                             ((*self_0).included_range_difference_index).wrapping_add(1);
+                        (*self_0).included_range_difference_index;
                     }
-                    if !(version_count != 0 as libc::c_int as libc::c_uint) {
+                    if !(version_count != 0 as libc::c_int as uint32_t) {
                         current_block = 1868291631715963762;
                         break;
                     }
                 }
             }
             match current_block {
-                16230954843571353507 => {}
+                12894208418235745730 => {}
                 _ => {
                     if !((*self_0).finished_tree.ptr).is_null() {
                     } else {
                         panic!();
                     }
+                    'c_3104: {
+                        if !((*self_0).finished_tree.ptr).is_null() {
+                        } else {
+                            panic!();
+                        }
+                    };
                     ts_subtree_balance(
                         (*self_0).finished_tree,
                         &mut (*self_0).tree_pool,

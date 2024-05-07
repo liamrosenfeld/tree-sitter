@@ -375,7 +375,7 @@ impl syn::visit_mut::VisitMut for ClockAfterDurationReplacer {
     fn visit_expr_mut(&mut self, i: &mut syn::Expr) {
         if let syn::Expr::Path(p) = i {
             if p.path.is_ident("duration") {
-                *i = syn::parse_quote!((duration as usize));
+                *i = syn::parse_quote!((duration as u64));
                 return;
             }
         }

@@ -1,12 +1,12 @@
 #![doc = include_str!("./README.md")]
-mod core_wrapper;
-pub use core_wrapper::core;
 
+mod core_wrapper;
 pub mod ffi;
+pub use core_wrapper::core;
 mod util;
 
-#[cfg(unix)]
-use std::os::unix::io::AsRawFd;
+#[cfg(any(unix, target_os = "wasi"))]
+use std::os::fd::AsRawFd;
 #[cfg(windows)]
 use std::os::windows::io::AsRawHandle;
 use std::{
@@ -535,10 +535,10 @@ impl Parser {
     #[doc(alias = "ts_parser_print_dot_graphs")]
     pub fn print_dot_graphs(
         &mut self,
-        #[cfg(unix)] file: &impl AsRawFd,
+        #[cfg(any(unix, target_os = "wasi"))] file: &impl AsRawFd,
         #[cfg(windows)] file: &impl AsRawHandle,
     ) {
-        #[cfg(unix)]
+        #[cfg(any(unix, target_os = "wasi"))]
         {
             let fd = file.as_raw_fd();
             unsafe {
@@ -944,10 +944,10 @@ impl Tree {
     #[doc(alias = "ts_tree_print_dot_graph")]
     pub fn print_dot_graph(
         &self,
-        #[cfg(unix)] file: &impl AsRawFd,
+        #[cfg(any(unix, target_os = "wasi"))] file: &impl AsRawFd,
         #[cfg(windows)] file: &impl AsRawHandle,
     ) {
-        #[cfg(unix)]
+        #[cfg(any(unix, target_os = "wasi"))]
         {
             let fd = file.as_raw_fd();
             unsafe { ffi::ts_tree_print_dot_graph(self.0.as_ptr(), fd) }
@@ -1333,10 +1333,19 @@ impl<'tree> Node<'tree> {
     }
 
     /// Get this node's immediate parent.
+    /// Prefer [`child_containing_descendant`](Node::child_containing_descendant)
+    /// for iterating over this node's ancestors.
     #[doc(alias = "ts_node_parent")]
     #[must_use]
     pub fn parent(&self) -> Option<Self> {
         Self::new(unsafe { ffi::ts_node_parent(self.0) })
+    }
+
+    /// Get this node's child that contains `descendant`.
+    #[doc(alias = "ts_node_child_containing_descendant")]
+    #[must_use]
+    pub fn child_containing_descendant(&self, descendant: Self) -> Option<Self> {
+        Self::new(unsafe { ffi::ts_node_child_containing_descendant(self.0, descendant.0) })
     }
 
     /// Get this node's next sibling.

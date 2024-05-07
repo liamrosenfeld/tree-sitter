@@ -1,7 +1,8 @@
-use crate::core::util::*;
-use crate::core::*;
-use :: c2rust_bitfields;
 use std::os;
+
+use :: c2rust_bitfields;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
@@ -181,7 +182,7 @@ unsafe extern "C" fn point__new(mut row: libc::c_uint, mut column: libc::c_uint)
 }
 #[inline]
 unsafe extern "C" fn point_add(mut a: TSPoint, mut b: TSPoint) -> TSPoint {
-    if b.row > 0 as libc::c_int as libc::c_uint {
+    if b.row > 0 as libc::c_int as uint32_t {
         return point__new((a.row).wrapping_add(b.row), b.column);
     } else {
         return point__new(a.row, (a.column).wrapping_add(b.column));
@@ -233,20 +234,25 @@ unsafe extern "C" fn _array__erase(
     } else {
         panic!();
     }
+    'c_3447: {
+        if index < (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
     let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
     std::ptr::copy(
         contents.offset(
-            (index.wrapping_add(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
-                .wrapping_mul(element_size) as isize,
+            (index.wrapping_add(1 as libc::c_int as uint32_t) as size_t * element_size) as isize,
         ) as *const libc::c_void,
-        contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-            as *mut libc::c_void,
-        ((((*self_0).size)
+        contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
+        (((*self_0).size)
             .wrapping_sub(index)
-            .wrapping_sub(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
-            .wrapping_mul(element_size)) as usize,
+            .wrapping_sub(1 as libc::c_int as uint32_t) as size_t
+            * element_size) as usize,
     );
     (*self_0).size = ((*self_0).size).wrapping_sub(1);
+    (*self_0).size;
 }
 #[inline]
 unsafe extern "C" fn _array__reserve(
@@ -258,12 +264,11 @@ unsafe extern "C" fn _array__reserve(
         if !((*self_0).contents).is_null() {
             (*self_0).contents = crate::core::alloc::ts_realloc(
                 (*self_0).contents,
-                (new_capacity as libc::c_ulong).wrapping_mul(element_size),
+                new_capacity as size_t * element_size,
             );
         } else {
-            (*self_0).contents = crate::core::alloc::ts_malloc(
-                (new_capacity as libc::c_ulong).wrapping_mul(element_size),
-            );
+            (*self_0).contents =
+                crate::core::alloc::ts_malloc(new_capacity as size_t * element_size);
         }
         (*self_0).capacity = new_capacity;
     }
@@ -276,9 +281,8 @@ unsafe extern "C" fn _array__grow(
 ) {
     let mut new_size: uint32_t = ((*self_0).size).wrapping_add(count);
     if new_size > (*self_0).capacity {
-        let mut new_capacity: uint32_t =
-            ((*self_0).capacity).wrapping_mul(2 as libc::c_int as libc::c_uint);
-        if new_capacity < 8 as libc::c_int as libc::c_uint {
+        let mut new_capacity: uint32_t = (*self_0).capacity * 2 as libc::c_int as uint32_t;
+        if new_capacity < 8 as libc::c_int as uint32_t {
             new_capacity = 8 as libc::c_int as uint32_t;
         }
         if new_capacity < new_size {
@@ -305,38 +309,37 @@ unsafe extern "C" fn _array__splice(
     } else {
         panic!();
     }
+    'c_3864: {
+        if old_end <= (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
     _array__reserve(self_0, element_size, new_size);
     let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
     if (*self_0).size > old_end {
         std::ptr::copy(
-            contents.offset((old_end as libc::c_ulong).wrapping_mul(element_size) as isize)
-                as *const libc::c_void,
-            contents.offset((new_end as libc::c_ulong).wrapping_mul(element_size) as isize)
-                as *mut libc::c_void,
-            ((((*self_0).size).wrapping_sub(old_end) as libc::c_ulong).wrapping_mul(element_size))
-                as usize,
+            contents.offset((old_end as size_t * element_size) as isize) as *const libc::c_void,
+            contents.offset((new_end as size_t * element_size) as isize) as *mut libc::c_void,
+            (((*self_0).size).wrapping_sub(old_end) as size_t * element_size) as usize,
         );
     }
-    if new_count > 0 as libc::c_int as libc::c_uint {
+    if new_count > 0 as libc::c_int as uint32_t {
         if !elements.is_null() {
             std::ptr::copy_nonoverlapping(
                 elements,
-                contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-                    as *mut libc::c_void,
-                (new_count as libc::c_ulong).wrapping_mul(element_size),
+                contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
+                new_count as size_t * element_size,
             );
         } else {
             std::ptr::write_bytes(
-                contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-                    as *mut libc::c_void,
+                contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
                 (0 as libc::c_int) as u8,
-                ((new_count as libc::c_ulong).wrapping_mul(element_size)) as usize,
+                (new_count as size_t * element_size) as usize,
             );
         }
     }
-    (*self_0).size = ((*self_0).size as libc::c_uint)
-        .wrapping_add(new_count.wrapping_sub(old_count)) as uint32_t
-        as uint32_t;
+    (*self_0).size = ((*self_0).size).wrapping_add(new_count.wrapping_sub(old_count));
 }
 #[inline]
 unsafe extern "C" fn ts_subtree_symbol(mut self_0: Subtree) -> TSSymbol {
@@ -437,7 +440,7 @@ unsafe extern "C" fn ts_subtree_total_bytes(mut self_0: Subtree) -> uint32_t {
 #[inline]
 unsafe extern "C" fn ts_subtree_child_count(mut self_0: Subtree) -> uint32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0 {
-        0 as libc::c_int as libc::c_uint
+        0 as libc::c_int as uint32_t
     } else {
         (*self_0.ptr).child_count
     };
@@ -445,9 +448,9 @@ unsafe extern "C" fn ts_subtree_child_count(mut self_0: Subtree) -> uint32_t {
 #[inline]
 unsafe extern "C" fn ts_subtree_visible_descendant_count(mut self_0: Subtree) -> uint32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0
-        || (*self_0.ptr).child_count == 0 as libc::c_int as libc::c_uint
+        || (*self_0.ptr).child_count == 0 as libc::c_int as uint32_t
     {
-        0 as libc::c_int as libc::c_uint
+        0 as libc::c_int as uint32_t
     } else {
         (*self_0.ptr)
             .c2rust_unnamed
@@ -461,7 +464,7 @@ unsafe extern "C" fn ts_subtree_error_cost(mut self_0: Subtree) -> uint32_t {
         return (110 as libc::c_int + 500 as libc::c_int) as uint32_t;
     } else {
         return if (self_0.data).is_inline() as libc::c_int != 0 {
-            0 as libc::c_int as libc::c_uint
+            0 as libc::c_int as uint32_t
         } else {
             (*self_0.ptr).error_cost
         };
@@ -470,7 +473,7 @@ unsafe extern "C" fn ts_subtree_error_cost(mut self_0: Subtree) -> uint32_t {
 #[inline]
 unsafe extern "C" fn ts_subtree_dynamic_precedence(mut self_0: Subtree) -> int32_t {
     return if (self_0.data).is_inline() as libc::c_int != 0
-        || (*self_0.ptr).child_count == 0 as libc::c_int as libc::c_uint
+        || (*self_0.ptr).child_count == 0 as libc::c_int as uint32_t
     {
         0 as libc::c_int
     } else {
@@ -510,20 +513,34 @@ unsafe extern "C" fn ts_language_write_symbol_as_dot_string(
             }
         }
         chr = chr.offset(1);
+        chr;
     }
 }
 unsafe extern "C" fn stack_node_retain(mut self_0: *mut StackNode) {
     if self_0.is_null() {
         return;
     }
-    if (*self_0).ref_count > 0 as libc::c_int as libc::c_uint {
+    if (*self_0).ref_count > 0 as libc::c_int as uint32_t {
     } else {
         panic!();
     }
+    'c_6915: {
+        if (*self_0).ref_count > 0 as libc::c_int as uint32_t {
+        } else {
+            panic!();
+        }
+    };
     (*self_0).ref_count = ((*self_0).ref_count).wrapping_add(1);
-    if (*self_0).ref_count != 0 as libc::c_int as libc::c_uint {
+    (*self_0).ref_count;
+    if (*self_0).ref_count != 0 as libc::c_int as uint32_t {
     } else {
         panic!();
+    }
+    'c_6868: {
+        if (*self_0).ref_count != 0 as libc::c_int as uint32_t {
+        } else {
+            panic!();
+        }
     };
 }
 unsafe extern "C" fn stack_node_release(
@@ -532,12 +549,19 @@ unsafe extern "C" fn stack_node_release(
     mut subtree_pool: *mut SubtreePool,
 ) {
     loop {
-        if (*self_0).ref_count != 0 as libc::c_int as libc::c_uint {
+        if (*self_0).ref_count != 0 as libc::c_int as uint32_t {
         } else {
             panic!();
         }
+        'c_6567: {
+            if (*self_0).ref_count != 0 as libc::c_int as uint32_t {
+            } else {
+                panic!();
+            }
+        };
         (*self_0).ref_count = ((*self_0).ref_count).wrapping_sub(1);
-        if (*self_0).ref_count > 0 as libc::c_int as libc::c_uint {
+        (*self_0).ref_count;
+        if (*self_0).ref_count > 0 as libc::c_int as uint32_t {
             return;
         }
         let mut first_predecessor: *mut StackNode = 0 as *mut StackNode;
@@ -551,6 +575,7 @@ unsafe extern "C" fn stack_node_release(
                 }
                 stack_node_release(link.node, pool, subtree_pool);
                 i = i.wrapping_sub(1);
+                i;
             }
             let mut link_0: StackLink = (*self_0).links[0 as libc::c_int as usize];
             if !(link_0.subtree.ptr).is_null() {
@@ -558,7 +583,7 @@ unsafe extern "C" fn stack_node_release(
             }
             first_predecessor = (*self_0).links[0 as libc::c_int as usize].node;
         }
-        if (*pool).size < 50 as libc::c_int as libc::c_uint {
+        if (*pool).size < 50 as libc::c_int as uint32_t {
             _array__grow(
                 pool as *mut Array,
                 1 as libc::c_int as uint32_t,
@@ -581,11 +606,13 @@ unsafe extern "C" fn stack__subtree_node_count(mut subtree: Subtree) -> uint32_t
     let mut count: uint32_t = ts_subtree_visible_descendant_count(subtree);
     if ts_subtree_visible(subtree) {
         count = count.wrapping_add(1);
+        count;
     }
     if ts_subtree_symbol(subtree) as libc::c_int
         == -(1 as libc::c_int) as TSSymbol as libc::c_int - 1 as libc::c_int
     {
         count = count.wrapping_add(1);
+        count;
     }
     return count;
 }
@@ -596,7 +623,7 @@ unsafe extern "C" fn stack_node_new(
     mut state: TSStateId,
     mut pool: *mut StackNodeArray,
 ) -> *mut StackNode {
-    let mut node: *mut StackNode = (if (*pool).size > 0 as libc::c_int as libc::c_uint {
+    let mut node: *mut StackNode = (if (*pool).size > 0 as libc::c_int as uint32_t {
         (*pool).size = ((*pool).size).wrapping_sub(1);
         *((*pool).contents).offset((*pool).size as isize) as *mut libc::c_void
     } else {
@@ -669,8 +696,8 @@ unsafe extern "C" fn stack__subtree_is_equivalent(mut left: Subtree, mut right: 
     if ts_subtree_symbol(left) as libc::c_int != ts_subtree_symbol(right) as libc::c_int {
         return 0 as libc::c_int != 0;
     }
-    if ts_subtree_error_cost(left) > 0 as libc::c_int as libc::c_uint
-        && ts_subtree_error_cost(right) > 0 as libc::c_int as libc::c_uint
+    if ts_subtree_error_cost(left) > 0 as libc::c_int as uint32_t
+        && ts_subtree_error_cost(right) > 0 as libc::c_int as uint32_t
     {
         return 1 as libc::c_int != 0;
     }
@@ -717,6 +744,7 @@ unsafe extern "C" fn stack_node_add_link(
                         subtree_pool,
                     );
                     j += 1;
+                    j;
                 }
                 let mut dynamic_precedence: int32_t = (*link.node).dynamic_precedence;
                 if !(link.subtree.ptr).is_null() {
@@ -729,6 +757,7 @@ unsafe extern "C" fn stack_node_add_link(
             }
         }
         i += 1;
+        i;
     }
     if (*self_0).link_count as libc::c_int == 8 as libc::c_int {
         return;
@@ -803,7 +832,7 @@ unsafe extern "C" fn ts_stack__add_version(
     if !(head.last_external_token.ptr).is_null() {
         ts_subtree_retain(head.last_external_token);
     }
-    return ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as libc::c_uint);
+    return ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as uint32_t);
 }
 unsafe extern "C" fn ts_stack__add_slice(
     mut self_0: *mut Stack,
@@ -811,8 +840,8 @@ unsafe extern "C" fn ts_stack__add_slice(
     mut node: *mut StackNode,
     mut subtrees: *mut SubtreeArray,
 ) {
-    let mut i: uint32_t = ((*self_0).slices.size).wrapping_sub(1 as libc::c_int as libc::c_uint);
-    while i.wrapping_add(1 as libc::c_int as libc::c_uint) > 0 as libc::c_int as libc::c_uint {
+    let mut i: uint32_t = ((*self_0).slices.size).wrapping_sub(1 as libc::c_int as uint32_t);
+    while i.wrapping_add(1 as libc::c_int as uint32_t) > 0 as libc::c_int as uint32_t {
         let mut version: StackVersion = (*((*self_0).slices.contents).offset(i as isize)).version;
         if (*((*self_0).heads.contents).offset(version as isize)).node == node {
             let mut slice: StackSlice = {
@@ -825,7 +854,7 @@ unsafe extern "C" fn ts_stack__add_slice(
             _array__splice(
                 &mut (*self_0).slices as *mut StackSliceArray as *mut Array,
                 ::core::mem::size_of::<StackSlice>() as libc::c_ulong,
-                i.wrapping_add(1 as libc::c_int as libc::c_uint),
+                i.wrapping_add(1 as libc::c_int as uint32_t),
                 0 as libc::c_int as uint32_t,
                 1 as libc::c_int as uint32_t,
                 &mut slice as *mut StackSlice as *const libc::c_void,
@@ -833,6 +862,7 @@ unsafe extern "C" fn ts_stack__add_slice(
             return;
         }
         i = i.wrapping_sub(1);
+        i;
     }
     let mut version_0: StackVersion = ts_stack__add_version(self_0, original_version, node);
     let mut slice_0: StackSlice = {
@@ -864,6 +894,12 @@ unsafe extern "C" fn stack__iter(
     } else {
         panic!();
     }
+    'c_9028: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     let mut new_iterator: StackIterator = {
@@ -901,7 +937,7 @@ unsafe extern "C" fn stack__iter(
     let fresh5 = (*self_0).iterators.size;
     (*self_0).iterators.size = ((*self_0).iterators.size).wrapping_add(1);
     *((*self_0).iterators.contents).offset(fresh5 as isize) = new_iterator;
-    while (*self_0).iterators.size > 0 as libc::c_int as libc::c_uint {
+    while (*self_0).iterators.size > 0 as libc::c_int as uint32_t {
         let mut i: uint32_t = 0 as libc::c_int as uint32_t;
         let mut size: uint32_t = (*self_0).iterators.size;
         while i < size {
@@ -910,9 +946,8 @@ unsafe extern "C" fn stack__iter(
             let mut node: *mut StackNode = (*iterator).node;
             let mut action: StackAction =
                 callback.expect("non-null function pointer")(payload, iterator);
-            let mut should_pop: bool = action & StackActionPop as libc::c_int as libc::c_uint != 0;
-            let mut should_stop: bool = action & StackActionStop as libc::c_int as libc::c_uint
-                != 0
+            let mut should_pop: bool = action & StackActionPop as libc::c_int as StackAction != 0;
+            let mut should_stop: bool = action & StackActionStop as libc::c_int as StackAction != 0
                 || (*node).link_count as libc::c_int == 0 as libc::c_int;
             if should_pop {
                 let mut subtrees: SubtreeArray = (*iterator).subtrees;
@@ -932,11 +967,13 @@ unsafe extern "C" fn stack__iter(
                     i,
                 );
                 i = i.wrapping_sub(1);
+                i;
                 size = size.wrapping_sub(1);
+                size;
             } else {
                 let mut current_block_41: u64;
                 let mut j: uint32_t = 1 as libc::c_int as uint32_t;
-                while j <= (*node).link_count as libc::c_uint {
+                while j <= (*node).link_count as uint32_t {
                     let mut next_iterator: *mut StackIterator = 0 as *mut StackIterator;
                     let mut link: StackLink = StackLink {
                         node: 0 as *mut StackNode,
@@ -954,12 +991,12 @@ unsafe extern "C" fn stack__iter(
                         },
                         is_pending: false,
                     };
-                    if j == (*node).link_count as libc::c_uint {
+                    if j == (*node).link_count as uint32_t {
                         link = (*node).links[0 as libc::c_int as usize];
                         next_iterator = &mut *((*self_0).iterators.contents).offset(i as isize)
                             as *mut StackIterator;
                         current_block_41 = 11459959175219260272;
-                    } else if (*self_0).iterators.size >= 64 as libc::c_int as libc::c_uint {
+                    } else if (*self_0).iterators.size >= 64 as libc::c_int as uint32_t {
                         current_block_41 = 5783071609795492627;
                     } else {
                         link = (*node).links[j as usize];
@@ -973,15 +1010,22 @@ unsafe extern "C" fn stack__iter(
                         let fresh6 = (*self_0).iterators.size;
                         (*self_0).iterators.size = ((*self_0).iterators.size).wrapping_add(1);
                         *((*self_0).iterators.contents).offset(fresh6 as isize) = current_iterator;
-                        if ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
+                        if ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as uint32_t)
                             < (*self_0).iterators.size
                         {
                         } else {
                             panic!();
                         }
+                        'c_8351: {
+                            if ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as uint32_t)
+                                < (*self_0).iterators.size
+                            {
+                            } else {
+                                panic!();
+                            }
+                        };
                         next_iterator = &mut *((*self_0).iterators.contents).offset(
-                            ((*self_0).iterators.size)
-                                .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                            ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as uint32_t)
                                 as isize,
                         ) as *mut StackIterator;
                         ts_subtree_array_copy(
@@ -1011,6 +1055,7 @@ unsafe extern "C" fn stack__iter(
                                 if !ts_subtree_extra(link.subtree) {
                                     (*next_iterator).subtree_count =
                                         ((*next_iterator).subtree_count).wrapping_add(1);
+                                    (*next_iterator).subtree_count;
                                     if !link.is_pending {
                                         (*next_iterator).is_pending = 0 as libc::c_int != 0;
                                     }
@@ -1018,15 +1063,18 @@ unsafe extern "C" fn stack__iter(
                             } else {
                                 (*next_iterator).subtree_count =
                                     ((*next_iterator).subtree_count).wrapping_add(1);
+                                (*next_iterator).subtree_count;
                                 (*next_iterator).is_pending = 0 as libc::c_int != 0;
                             }
                         }
                         _ => {}
                     }
                     j = j.wrapping_add(1);
+                    j;
                 }
             }
             i = i.wrapping_add(1);
+            i;
         }
     }
     return (*self_0).slices;
@@ -1103,6 +1151,7 @@ pub unsafe extern "C" fn ts_stack_delete(mut self_0: *mut Stack) {
             (*self_0).subtree_pool,
         );
         i = i.wrapping_add(1);
+        i;
     }
     (*self_0).heads.size = 0 as libc::c_int as uint32_t;
     if !((*self_0).node_pool.contents).is_null() {
@@ -1112,6 +1161,7 @@ pub unsafe extern "C" fn ts_stack_delete(mut self_0: *mut Stack) {
                 *((*self_0).node_pool.contents).offset(i_0 as isize) as *mut libc::c_void
             );
             i_0 = i_0.wrapping_add(1);
+            i_0;
         }
         _array__delete(&mut (*self_0).node_pool as *mut StackNodeArray as *mut Array);
     }
@@ -1131,6 +1181,12 @@ pub unsafe extern "C" fn ts_stack_state(
     } else {
         panic!();
     }
+    'c_7655: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead))
         .node)
         .state;
@@ -1144,6 +1200,12 @@ pub unsafe extern "C" fn ts_stack_position(
     } else {
         panic!();
     }
+    'c_7915: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead))
         .node)
         .position;
@@ -1157,6 +1219,12 @@ pub unsafe extern "C" fn ts_stack_last_external_token(
     } else {
         panic!();
     }
+    'c_7730: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead))
         .last_external_token;
 }
@@ -1170,6 +1238,12 @@ pub unsafe extern "C" fn ts_stack_set_last_external_token(
     } else {
         panic!();
     }
+    'c_7813: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     if !(token.ptr).is_null() {
@@ -1189,6 +1263,12 @@ pub unsafe extern "C" fn ts_stack_error_cost(
     } else {
         panic!();
     }
+    'c_10521: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     let mut result: libc::c_uint = (*(*head).node).error_cost;
@@ -1209,6 +1289,12 @@ pub unsafe extern "C" fn ts_stack_node_count_since_error(
     } else {
         panic!();
     }
+    'c_9813: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     if (*(*head).node).node_count < (*head).node_count_at_last_error {
@@ -1228,6 +1314,12 @@ pub unsafe extern "C" fn ts_stack_push(
     } else {
         panic!();
     }
+    'c_8014: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     let mut new_node: *mut StackNode = stack_node_new(
@@ -1276,7 +1368,7 @@ unsafe extern "C" fn pop_pending_callback(
     mut payload: *mut libc::c_void,
     mut iterator: *const StackIterator,
 ) -> StackAction {
-    if (*iterator).subtree_count >= 1 as libc::c_int as libc::c_uint {
+    if (*iterator).subtree_count >= 1 as libc::c_int as uint32_t {
         if (*iterator).is_pending {
             return (StackActionPop as libc::c_int | StackActionStop as libc::c_int) as StackAction;
         } else {
@@ -1301,7 +1393,7 @@ pub unsafe extern "C" fn ts_stack_pop_pending(
         0 as *mut libc::c_void,
         0 as libc::c_int,
     );
-    if pop.size > 0 as libc::c_int as libc::c_uint {
+    if pop.size > 0 as libc::c_int as uint32_t {
         ts_stack_renumber_version(
             self_0,
             (*(pop.contents).offset(0 as libc::c_int as isize)).version,
@@ -1316,7 +1408,7 @@ unsafe extern "C" fn pop_error_callback(
     mut payload: *mut libc::c_void,
     mut iterator: *const StackIterator,
 ) -> StackAction {
-    if (*iterator).subtrees.size > 0 as libc::c_int as libc::c_uint {
+    if (*iterator).subtrees.size > 0 as libc::c_int as uint32_t {
         let mut found_error: *mut bool = payload as *mut bool;
         if !*found_error
             && ts_subtree_is_error(
@@ -1342,6 +1434,12 @@ pub unsafe extern "C" fn ts_stack_pop_error(
     } else {
         panic!();
     }
+    'c_9583: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut node: *mut StackNode =
         (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead)).node;
     let mut i: libc::c_uint = 0 as libc::c_int as libc::c_uint;
@@ -1363,11 +1461,17 @@ pub unsafe extern "C" fn ts_stack_pop_error(
                 &mut found_error as *mut bool as *mut libc::c_void,
                 1 as libc::c_int,
             );
-            if pop.size > 0 as libc::c_int as libc::c_uint {
-                if pop.size == 1 as libc::c_int as libc::c_uint {
+            if pop.size > 0 as libc::c_int as uint32_t {
+                if pop.size == 1 as libc::c_int as uint32_t {
                 } else {
                     panic!();
                 }
+                'c_9504: {
+                    if pop.size == 1 as libc::c_int as uint32_t {
+                    } else {
+                        panic!();
+                    }
+                };
                 ts_stack_renumber_version(
                     self_0,
                     (*(pop.contents).offset(0 as libc::c_int as isize)).version,
@@ -1378,6 +1482,7 @@ pub unsafe extern "C" fn ts_stack_pop_error(
             break;
         } else {
             i = i.wrapping_add(1);
+            i;
         }
     }
     return {
@@ -1428,7 +1533,7 @@ unsafe extern "C" fn summarize_stack_callback(
         return StackActionStop as libc::c_int as StackAction;
     }
     let mut i: libc::c_uint =
-        ((*(*session).summary).size).wrapping_sub(1 as libc::c_int as libc::c_uint);
+        ((*(*session).summary).size).wrapping_sub(1 as libc::c_int as uint32_t);
     while i.wrapping_add(1 as libc::c_int as libc::c_uint) > 0 as libc::c_int as libc::c_uint {
         let mut entry: StackSummaryEntry = *((*(*session).summary).contents).offset(i as isize);
         if entry.depth < depth {
@@ -1438,6 +1543,7 @@ unsafe extern "C" fn summarize_stack_callback(
             return StackActionNone as libc::c_int as StackAction;
         }
         i = i.wrapping_sub(1);
+        i;
     }
     _array__grow(
         (*session).summary as *mut Array,
@@ -1501,6 +1607,12 @@ pub unsafe extern "C" fn ts_stack_get_summary(
     } else {
         panic!();
     }
+    'c_10437: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead))
         .summary;
 }
@@ -1513,6 +1625,12 @@ pub unsafe extern "C" fn ts_stack_dynamic_precedence(
     } else {
         panic!();
     }
+    'c_9917: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead))
         .node)
         .dynamic_precedence;
@@ -1526,6 +1644,12 @@ pub unsafe extern "C" fn ts_stack_has_advanced_since_error(
     } else {
         panic!();
     }
+    'c_10034: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *const StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     let mut node: *const StackNode = (*head).node;
@@ -1540,11 +1664,11 @@ pub unsafe extern "C" fn ts_stack_has_advanced_since_error(
         if (subtree.ptr).is_null() {
             break;
         }
-        if ts_subtree_total_bytes(subtree) > 0 as libc::c_int as libc::c_uint {
+        if ts_subtree_total_bytes(subtree) > 0 as libc::c_int as uint32_t {
             return 1 as libc::c_int != 0;
         } else {
             if !((*node).node_count > (*head).node_count_at_last_error
-                && ts_subtree_error_cost(subtree) == 0 as libc::c_int as libc::c_uint)
+                && ts_subtree_error_cost(subtree) == 0 as libc::c_int as uint32_t)
             {
                 break;
             }
@@ -1562,6 +1686,12 @@ pub unsafe extern "C" fn ts_stack_remove_version(
     } else {
         panic!();
     }
+    'c_10687: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     stack_head_delete(
         &mut *((*self_0).heads.contents).offset(version as isize),
         &mut (*self_0).node_pool,
@@ -1586,10 +1716,22 @@ pub unsafe extern "C" fn ts_stack_renumber_version(
     } else {
         panic!();
     }
+    'c_9459: {
+        if v2 < v1 {
+        } else {
+            panic!();
+        }
+    };
     if v1 < (*self_0).heads.size {
     } else {
         panic!();
     }
+    'c_9412: {
+        if v1 < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut source_head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(v1 as isize) as *mut StackHead;
     let mut target_head: *mut StackHead =
@@ -1630,6 +1772,12 @@ pub unsafe extern "C" fn ts_stack_copy_version(
     } else {
         panic!();
     }
+    'c_12204: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     _array__grow(
         &mut (*self_0).heads as *mut C2RustUnnamed_8 as *mut Array,
         1 as libc::c_int as uint32_t,
@@ -1639,20 +1787,26 @@ pub unsafe extern "C" fn ts_stack_copy_version(
     (*self_0).heads.size = ((*self_0).heads.size).wrapping_add(1);
     *((*self_0).heads.contents).offset(fresh9 as isize) =
         *((*self_0).heads.contents).offset(version as isize);
-    if ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as libc::c_uint) < (*self_0).heads.size
-    {
+    if ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).heads.size {
     } else {
         panic!();
     }
+    'c_12066: {
+        if ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).heads.size
+        {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead = &mut *((*self_0).heads.contents)
-        .offset(((*self_0).heads.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+        .offset(((*self_0).heads.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
         as *mut StackHead;
     stack_node_retain((*head).node);
     if !((*head).last_external_token.ptr).is_null() {
         ts_subtree_retain((*head).last_external_token);
     }
     (*head).summary = 0 as *mut StackSummary;
-    return ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as libc::c_uint);
+    return ((*self_0).heads.size).wrapping_sub(1 as libc::c_int as uint32_t);
 }
 #[no_mangle]
 pub unsafe extern "C" fn ts_stack_merge(
@@ -1668,13 +1822,14 @@ pub unsafe extern "C" fn ts_stack_merge(
     let mut head2: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version2 as isize) as *mut StackHead;
     let mut i: uint32_t = 0 as libc::c_int as uint32_t;
-    while i < (*(*head2).node).link_count as libc::c_uint {
+    while i < (*(*head2).node).link_count as uint32_t {
         stack_node_add_link(
             (*head1).node,
             (*(*head2).node).links[i as usize],
             (*self_0).subtree_pool,
         );
         i = i.wrapping_add(1);
+        i;
     }
     if (*(*head1).node).state as libc::c_int == 0 as libc::c_int {
         (*head1).node_count_at_last_error = (*(*head1).node).node_count;
@@ -1709,6 +1864,12 @@ pub unsafe extern "C" fn ts_stack_halt(mut self_0: *mut Stack, mut version: Stac
     } else {
         panic!();
     }
+    'c_11685: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead)).status =
         StackStatusHalted;
 }
@@ -1722,6 +1883,12 @@ pub unsafe extern "C" fn ts_stack_pause(
     } else {
         panic!();
     }
+    'c_11597: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     (*head).status = StackStatusPaused;
@@ -1737,6 +1904,12 @@ pub unsafe extern "C" fn ts_stack_is_active(
     } else {
         panic!();
     }
+    'c_11763: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead)).status
         as libc::c_uint
         == StackStatusActive as libc::c_int as libc::c_uint;
@@ -1750,6 +1923,12 @@ pub unsafe extern "C" fn ts_stack_is_halted(
     } else {
         panic!();
     }
+    'c_11917: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead)).status
         as libc::c_uint
         == StackStatusHalted as libc::c_int as libc::c_uint;
@@ -1763,6 +1942,12 @@ pub unsafe extern "C" fn ts_stack_is_paused(
     } else {
         panic!();
     }
+    'c_11840: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     return (*(&mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead)).status
         as libc::c_uint
         == StackStatusPaused as libc::c_int as libc::c_uint;
@@ -1776,12 +1961,24 @@ pub unsafe extern "C" fn ts_stack_resume(
     } else {
         panic!();
     }
+    'c_11448: {
+        if version < (*self_0).heads.size {
+        } else {
+            panic!();
+        }
+    };
     let mut head: *mut StackHead =
         &mut *((*self_0).heads.contents).offset(version as isize) as *mut StackHead;
     if (*head).status as libc::c_uint == StackStatusPaused as libc::c_int as libc::c_uint {
     } else {
         panic!();
     }
+    'c_11521: {
+        if (*head).status as libc::c_uint == StackStatusPaused as libc::c_int as libc::c_uint {
+        } else {
+            panic!();
+        }
+    };
     let mut result: Subtree = (*head).lookahead_when_paused;
     (*head).status = StackStatusActive;
     (*head).lookahead_when_paused = Subtree {
@@ -1800,6 +1997,7 @@ pub unsafe extern "C" fn ts_stack_clear(mut self_0: *mut Stack) {
             (*self_0).subtree_pool,
         );
         i = i.wrapping_add(1);
+        i;
     }
     (*self_0).heads.size = 0 as libc::c_int as uint32_t;
     _array__grow(
@@ -1880,6 +2078,7 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
                     )
                     .unwrap_or(usize::MAX) as os::raw::c_int;
                     j = j.wrapping_add(1);
+                    j;
                 }
             }
             if !((*head).last_external_token.ptr).is_null() {
@@ -1893,6 +2092,7 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
                     fwrite!(f, " {:02X}", *data.offset(j_0 as isize) as libc::c_int)
                         .unwrap_or(usize::MAX) as os::raw::c_int;
                     j_0 = j_0.wrapping_add(1);
+                    j_0;
                 }
             }
             fwrite!(f, "\"]\n",).unwrap_or(usize::MAX) as os::raw::c_int;
@@ -1918,6 +2118,7 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
             };
         }
         i = i.wrapping_add(1);
+        i;
     }
     let mut all_iterators_done: bool = 0 as libc::c_int != 0;
     while !all_iterators_done {
@@ -1933,6 +2134,7 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
                     break;
                 } else {
                     j_1 = j_1.wrapping_add(1);
+                    j_1;
                 }
             }
             if !node.is_null() {
@@ -1957,7 +2159,7 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
                     fwrite!(f, "label=\"{}\"", (*node).state as libc::c_int).unwrap_or(usize::MAX)
                         as os::raw::c_int;
                 }
-                fwrite ! (f , " tooltip=\"position: {},{}\nnode_count:{}\nerror_cost: {}\ndynamic_precedence: {}\"];\n" , ((* node) . position . extent . row) . wrapping_add (1 as libc :: c_int as libc :: c_uint) , (* node) . position . extent . column , (* node) . node_count , (* node) . error_cost , (* node) . dynamic_precedence) . unwrap_or (usize :: MAX) as os :: raw :: c_int ;
+                fwrite ! (f , " tooltip=\"position: {},{}\nnode_count:{}\nerror_cost: {}\ndynamic_precedence: {}\"];\n" , ((* node) . position . extent . row) . wrapping_add (1 as libc :: c_int as uint32_t) , (* node) . position . extent . column , (* node) . node_count , (* node) . error_cost , (* node) . dynamic_precedence) . unwrap_or (usize :: MAX) as os :: raw :: c_int ;
                 let mut j_2: libc::c_int = 0 as libc::c_int;
                 while j_2 < (*node).link_count as libc::c_int {
                     let mut link: StackLink = (*node).links[j_2 as usize];
@@ -2016,20 +2218,28 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
                         let fresh12 = (*self_0).iterators.size;
                         (*self_0).iterators.size = ((*self_0).iterators.size).wrapping_add(1);
                         *((*self_0).iterators.contents).offset(fresh12 as isize) = iterator;
-                        if ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
+                        if ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as uint32_t)
                             < (*self_0).iterators.size
                         {
                         } else {
                             panic!();
                         }
+                        'c_12432: {
+                            if ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as uint32_t)
+                                < (*self_0).iterators.size
+                            {
+                            } else {
+                                panic!();
+                            }
+                        };
                         next_iterator = &mut *((*self_0).iterators.contents).offset(
-                            ((*self_0).iterators.size)
-                                .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                            ((*self_0).iterators.size).wrapping_sub(1 as libc::c_int as uint32_t)
                                 as isize,
                         ) as *mut StackIterator;
                     }
                     (*next_iterator).node = link.node;
                     j_2 += 1;
+                    j_2;
                 }
                 _array__grow(
                     &mut visited_nodes as *mut C2RustUnnamed_9 as *mut Array,
@@ -2042,6 +2252,7 @@ pub unsafe extern "C" fn ts_stack_print_dot_graph(
                 *fresh14 = node;
             }
             i_0 = i_0.wrapping_add(1);
+            i_0;
         }
     }
     fwrite!(f, "}}\n",).unwrap_or(usize::MAX) as os::raw::c_int;

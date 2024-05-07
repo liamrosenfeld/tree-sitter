@@ -1,7 +1,8 @@
-use crate::core::util::*;
-use crate::core::*;
-use :: c2rust_bitfields;
 use std::os;
+
+use :: c2rust_bitfields;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
@@ -338,6 +339,69 @@ pub type C2RustUnnamed_31 = libc::c_uint;
 pub const TSParseActionTypeRecover: C2RustUnnamed_31 = 3;
 pub const TSParseActionTypeAccept: C2RustUnnamed_31 = 2;
 #[inline]
+unsafe extern "C" fn _array__assign(
+    mut self_0: *mut Array,
+    mut other: *const Array,
+    mut element_size: size_t,
+) {
+    _array__reserve(self_0, element_size, (*other).size);
+    (*self_0).size = (*other).size;
+    std::ptr::copy_nonoverlapping(
+        (*other).contents,
+        (*self_0).contents,
+        (*self_0).size as size_t * element_size,
+    );
+}
+#[inline]
+unsafe extern "C" fn _array__erase(
+    mut self_0: *mut Array,
+    mut element_size: size_t,
+    mut index: uint32_t,
+) {
+    if index < (*self_0).size {
+    } else {
+        panic!();
+    }
+    'c_9576: {
+        if index < (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
+    let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
+    std::ptr::copy(
+        contents.offset(
+            (index.wrapping_add(1 as libc::c_int as uint32_t) as size_t * element_size) as isize,
+        ) as *const libc::c_void,
+        contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
+        (((*self_0).size)
+            .wrapping_sub(index)
+            .wrapping_sub(1 as libc::c_int as uint32_t) as size_t
+            * element_size) as usize,
+    );
+    (*self_0).size = ((*self_0).size).wrapping_sub(1);
+    (*self_0).size;
+}
+#[inline]
+unsafe extern "C" fn _array__reserve(
+    mut self_0: *mut Array,
+    mut element_size: size_t,
+    mut new_capacity: uint32_t,
+) {
+    if new_capacity > (*self_0).capacity {
+        if !((*self_0).contents).is_null() {
+            (*self_0).contents = crate::core::alloc::ts_realloc(
+                (*self_0).contents,
+                new_capacity as size_t * element_size,
+            );
+        } else {
+            (*self_0).contents =
+                crate::core::alloc::ts_malloc(new_capacity as size_t * element_size);
+        }
+        (*self_0).capacity = new_capacity;
+    }
+}
+#[inline]
 unsafe extern "C" fn _array__splice(
     mut self_0: *mut Array,
     mut element_size: size_t,
@@ -355,58 +419,37 @@ unsafe extern "C" fn _array__splice(
     } else {
         panic!();
     }
+    'c_3312: {
+        if old_end <= (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
     _array__reserve(self_0, element_size, new_size);
     let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
     if (*self_0).size > old_end {
         std::ptr::copy(
-            contents.offset((old_end as libc::c_ulong).wrapping_mul(element_size) as isize)
-                as *const libc::c_void,
-            contents.offset((new_end as libc::c_ulong).wrapping_mul(element_size) as isize)
-                as *mut libc::c_void,
-            ((((*self_0).size).wrapping_sub(old_end) as libc::c_ulong).wrapping_mul(element_size))
-                as usize,
+            contents.offset((old_end as size_t * element_size) as isize) as *const libc::c_void,
+            contents.offset((new_end as size_t * element_size) as isize) as *mut libc::c_void,
+            (((*self_0).size).wrapping_sub(old_end) as size_t * element_size) as usize,
         );
     }
-    if new_count > 0 as libc::c_int as libc::c_uint {
+    if new_count > 0 as libc::c_int as uint32_t {
         if !elements.is_null() {
             std::ptr::copy_nonoverlapping(
                 elements,
-                contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-                    as *mut libc::c_void,
-                (new_count as libc::c_ulong).wrapping_mul(element_size),
+                contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
+                new_count as size_t * element_size,
             );
         } else {
             std::ptr::write_bytes(
-                contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-                    as *mut libc::c_void,
+                contents.offset((index as size_t * element_size) as isize) as *mut libc::c_void,
                 (0 as libc::c_int) as u8,
-                ((new_count as libc::c_ulong).wrapping_mul(element_size)) as usize,
+                (new_count as size_t * element_size) as usize,
             );
         }
     }
-    (*self_0).size = ((*self_0).size as libc::c_uint)
-        .wrapping_add(new_count.wrapping_sub(old_count)) as uint32_t
-        as uint32_t;
-}
-#[inline]
-unsafe extern "C" fn _array__reserve(
-    mut self_0: *mut Array,
-    mut element_size: size_t,
-    mut new_capacity: uint32_t,
-) {
-    if new_capacity > (*self_0).capacity {
-        if !((*self_0).contents).is_null() {
-            (*self_0).contents = crate::core::alloc::ts_realloc(
-                (*self_0).contents,
-                (new_capacity as libc::c_ulong).wrapping_mul(element_size),
-            );
-        } else {
-            (*self_0).contents = crate::core::alloc::ts_malloc(
-                (new_capacity as libc::c_ulong).wrapping_mul(element_size),
-            );
-        }
-        (*self_0).capacity = new_capacity;
-    }
+    (*self_0).size = ((*self_0).size).wrapping_add(new_count.wrapping_sub(old_count));
 }
 #[inline]
 unsafe extern "C" fn _array__delete(mut self_0: *mut Array) {
@@ -425,9 +468,8 @@ unsafe extern "C" fn _array__grow(
 ) {
     let mut new_size: uint32_t = ((*self_0).size).wrapping_add(count);
     if new_size > (*self_0).capacity {
-        let mut new_capacity: uint32_t =
-            ((*self_0).capacity).wrapping_mul(2 as libc::c_int as libc::c_uint);
-        if new_capacity < 8 as libc::c_int as libc::c_uint {
+        let mut new_capacity: uint32_t = (*self_0).capacity * 2 as libc::c_int as uint32_t;
+        if new_capacity < 8 as libc::c_int as uint32_t {
             new_capacity = 8 as libc::c_int as uint32_t;
         }
         if new_capacity < new_size {
@@ -437,88 +479,106 @@ unsafe extern "C" fn _array__grow(
     }
 }
 #[inline]
-unsafe extern "C" fn _array__assign(
-    mut self_0: *mut Array,
-    mut other: *const Array,
-    mut element_size: size_t,
-) {
-    _array__reserve(self_0, element_size, (*other).size);
-    (*self_0).size = (*other).size;
-    std::ptr::copy_nonoverlapping(
-        (*other).contents,
-        (*self_0).contents,
-        ((*self_0).size as libc::c_ulong).wrapping_mul(element_size),
-    );
-}
-#[inline]
-unsafe extern "C" fn _array__erase(
-    mut self_0: *mut Array,
-    mut element_size: size_t,
-    mut index: uint32_t,
-) {
-    if index < (*self_0).size {
+unsafe extern "C" fn ts_lookahead_iterator__next(mut self_0: *mut LookaheadIterator) -> bool {
+    if (*self_0).is_small_state {
+        (*self_0).data = ((*self_0).data).offset(1);
+        (*self_0).data;
+        if (*self_0).data == (*self_0).group_end {
+            if (*self_0).group_count as libc::c_int == 0 as libc::c_int {
+                return 0 as libc::c_int != 0;
+            }
+            (*self_0).group_count = ((*self_0).group_count).wrapping_sub(1);
+            (*self_0).group_count;
+            let fresh0 = (*self_0).data;
+            (*self_0).data = ((*self_0).data).offset(1);
+            (*self_0).table_value = *fresh0;
+            let fresh1 = (*self_0).data;
+            (*self_0).data = ((*self_0).data).offset(1);
+            let mut symbol_count: libc::c_uint = *fresh1 as libc::c_uint;
+            (*self_0).group_end = ((*self_0).data).offset(symbol_count as isize);
+            (*self_0).symbol = *(*self_0).data;
+        } else {
+            (*self_0).symbol = *(*self_0).data;
+            return 1 as libc::c_int != 0;
+        }
     } else {
-        panic!();
+        loop {
+            (*self_0).data = ((*self_0).data).offset(1);
+            (*self_0).data;
+            (*self_0).symbol = ((*self_0).symbol).wrapping_add(1);
+            (*self_0).symbol;
+            if (*self_0).symbol as uint32_t >= (*(*self_0).language).symbol_count {
+                return 0 as libc::c_int != 0;
+            }
+            (*self_0).table_value = *(*self_0).data;
+            if !((*self_0).table_value == 0) {
+                break;
+            }
+        }
     }
-    let mut contents: *mut libc::c_char = (*self_0).contents as *mut libc::c_char;
-    std::ptr::copy(
-        contents.offset(
-            (index.wrapping_add(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
-                .wrapping_mul(element_size) as isize,
-        ) as *const libc::c_void,
-        contents.offset((index as libc::c_ulong).wrapping_mul(element_size) as isize)
-            as *mut libc::c_void,
-        ((((*self_0).size)
-            .wrapping_sub(index)
-            .wrapping_sub(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
-            .wrapping_mul(element_size)) as usize,
-    );
-    (*self_0).size = ((*self_0).size).wrapping_sub(1);
-}
-#[inline]
-unsafe extern "C" fn ts_subtree_symbol(mut self_0: Subtree) -> TSSymbol {
-    return (if (self_0.data).is_inline() as libc::c_int != 0 {
-        self_0.data.symbol as libc::c_int
+    if ((*self_0).symbol as uint32_t) < (*(*self_0).language).token_count {
+        let mut entry: *const TSParseActionEntry = &*((*(*self_0).language).parse_actions)
+            .offset((*self_0).table_value as isize)
+            as *const TSParseActionEntry;
+        (*self_0).action_count = (*entry).entry.count as uint16_t;
+        (*self_0).actions = entry.offset(1 as libc::c_int as isize) as *const TSParseAction;
+        (*self_0).next_state = 0 as libc::c_int as TSStateId;
     } else {
-        (*self_0.ptr).symbol as libc::c_int
-    }) as TSSymbol;
+        (*self_0).action_count = 0 as libc::c_int as uint16_t;
+        (*self_0).next_state = (*self_0).table_value;
+    }
+    return 1 as libc::c_int != 0;
 }
 #[inline]
-unsafe extern "C" fn point_lte(mut a: TSPoint, mut b: TSPoint) -> bool {
-    return a.row < b.row || a.row == b.row && a.column <= b.column;
+unsafe extern "C" fn ts_language_field_map(
+    mut self_0: *const TSLanguage,
+    mut production_id: uint32_t,
+    mut start: *mut *const TSFieldMapEntry,
+    mut end: *mut *const TSFieldMapEntry,
+) {
+    if (*self_0).field_count == 0 as libc::c_int as uint32_t {
+        *start = 0 as *const TSFieldMapEntry;
+        *end = 0 as *const TSFieldMapEntry;
+        return;
+    }
+    let mut slice: TSFieldMapSlice = *((*self_0).field_map_slices).offset(production_id as isize);
+    *start = &*((*self_0).field_map_entries).offset(slice.index as isize) as *const TSFieldMapEntry;
+    *end = (&*((*self_0).field_map_entries).offset(slice.index as isize) as *const TSFieldMapEntry)
+        .offset(slice.length as libc::c_int as isize);
 }
 #[inline]
-unsafe extern "C" fn ts_subtree_is_repetition(mut self_0: Subtree) -> uint32_t {
-    return (if (self_0.data).is_inline() as libc::c_int != 0 {
+unsafe extern "C" fn ts_language_alias_at(
+    mut self_0: *const TSLanguage,
+    mut production_id: uint32_t,
+    mut child_index: uint32_t,
+) -> TSSymbol {
+    return (if production_id != 0 {
+        *((*self_0).alias_sequences).offset(
+            (production_id * (*self_0).max_alias_sequence_length as uint32_t)
+                .wrapping_add(child_index) as isize,
+        ) as libc::c_int
+    } else {
         0 as libc::c_int
-    } else {
-        (!(*self_0.ptr).named()
-            && !(*self_0.ptr).visible()
-            && (*self_0.ptr).child_count != 0 as libc::c_int as libc::c_uint) as libc::c_int
-    }) as uint32_t;
-}
-#[inline]
-unsafe extern "C" fn point_gte(mut a: TSPoint, mut b: TSPoint) -> bool {
-    return a.row > b.row || a.row == b.row && a.column >= b.column;
+    }) as TSSymbol;
 }
 #[inline]
 unsafe extern "C" fn ts_language_lookaheads(
     mut self_0: *const TSLanguage,
     mut state: TSStateId,
 ) -> LookaheadIterator {
-    let mut is_small_state: bool = state as libc::c_uint >= (*self_0).large_state_count;
+    let mut is_small_state: bool = state as uint32_t >= (*self_0).large_state_count;
     let mut data: *const uint16_t = 0 as *const uint16_t;
     let mut group_end: *const uint16_t = 0 as *const uint16_t;
     let mut group_count: uint16_t = 0 as libc::c_int as uint16_t;
     if is_small_state {
         let mut index: uint32_t = *((*self_0).small_parse_table_map)
-            .offset((state as libc::c_uint).wrapping_sub((*self_0).large_state_count) as isize);
+            .offset((state as uint32_t).wrapping_sub((*self_0).large_state_count) as isize);
         data = &*((*self_0).small_parse_table).offset(index as isize) as *const uint16_t;
         group_end = data.offset(1 as libc::c_int as isize);
         group_count = *data;
     } else {
         data = (&*((*self_0).parse_table)
-            .offset((state as libc::c_uint).wrapping_mul((*self_0).symbol_count) as isize)
+            .offset((state as uint32_t * (*self_0).symbol_count) as isize)
             as *const uint16_t)
             .offset(-(1 as libc::c_int as isize));
     }
@@ -539,98 +599,6 @@ unsafe extern "C" fn ts_language_lookaheads(
         };
         init
     };
-}
-#[inline]
-unsafe extern "C" fn ts_lookahead_iterator__next(mut self_0: *mut LookaheadIterator) -> bool {
-    if (*self_0).is_small_state {
-        (*self_0).data = ((*self_0).data).offset(1);
-        if (*self_0).data == (*self_0).group_end {
-            if (*self_0).group_count as libc::c_int == 0 as libc::c_int {
-                return 0 as libc::c_int != 0;
-            }
-            (*self_0).group_count = ((*self_0).group_count).wrapping_sub(1);
-            let fresh0 = (*self_0).data;
-            (*self_0).data = ((*self_0).data).offset(1);
-            (*self_0).table_value = *fresh0;
-            let fresh1 = (*self_0).data;
-            (*self_0).data = ((*self_0).data).offset(1);
-            let mut symbol_count: libc::c_uint = *fresh1 as libc::c_uint;
-            (*self_0).group_end = ((*self_0).data).offset(symbol_count as isize);
-            (*self_0).symbol = *(*self_0).data;
-        } else {
-            (*self_0).symbol = *(*self_0).data;
-            return 1 as libc::c_int != 0;
-        }
-    } else {
-        loop {
-            (*self_0).data = ((*self_0).data).offset(1);
-            (*self_0).symbol = ((*self_0).symbol).wrapping_add(1);
-            if (*self_0).symbol as libc::c_uint >= (*(*self_0).language).symbol_count {
-                return 0 as libc::c_int != 0;
-            }
-            (*self_0).table_value = *(*self_0).data;
-            if !((*self_0).table_value == 0) {
-                break;
-            }
-        }
-    }
-    if ((*self_0).symbol as libc::c_uint) < (*(*self_0).language).token_count {
-        let mut entry: *const TSParseActionEntry = &*((*(*self_0).language).parse_actions)
-            .offset((*self_0).table_value as isize)
-            as *const TSParseActionEntry;
-        (*self_0).action_count = (*entry).entry.count as uint16_t;
-        (*self_0).actions = entry.offset(1 as libc::c_int as isize) as *const TSParseAction;
-        (*self_0).next_state = 0 as libc::c_int as TSStateId;
-    } else {
-        (*self_0).action_count = 0 as libc::c_int as uint16_t;
-        (*self_0).next_state = (*self_0).table_value;
-    }
-    return 1 as libc::c_int != 0;
-}
-#[inline]
-unsafe extern "C" fn ts_language_state_is_primary(
-    mut self_0: *const TSLanguage,
-    mut state: TSStateId,
-) -> bool {
-    if (*self_0).version >= 14 as libc::c_int as libc::c_uint {
-        return state as libc::c_int
-            == *((*self_0).primary_state_ids).offset(state as isize) as libc::c_int;
-    } else {
-        return 1 as libc::c_int != 0;
-    };
-}
-#[inline]
-unsafe extern "C" fn ts_language_alias_at(
-    mut self_0: *const TSLanguage,
-    mut production_id: uint32_t,
-    mut child_index: uint32_t,
-) -> TSSymbol {
-    return (if production_id != 0 {
-        *((*self_0).alias_sequences).offset(
-            production_id
-                .wrapping_mul((*self_0).max_alias_sequence_length as libc::c_uint)
-                .wrapping_add(child_index) as isize,
-        ) as libc::c_int
-    } else {
-        0 as libc::c_int
-    }) as TSSymbol;
-}
-#[inline]
-unsafe extern "C" fn ts_language_field_map(
-    mut self_0: *const TSLanguage,
-    mut production_id: uint32_t,
-    mut start: *mut *const TSFieldMapEntry,
-    mut end: *mut *const TSFieldMapEntry,
-) {
-    if (*self_0).field_count == 0 as libc::c_int as libc::c_uint {
-        *start = 0 as *const TSFieldMapEntry;
-        *end = 0 as *const TSFieldMapEntry;
-        return;
-    }
-    let mut slice: TSFieldMapSlice = *((*self_0).field_map_slices).offset(production_id as isize);
-    *start = &*((*self_0).field_map_entries).offset(slice.index as isize) as *const TSFieldMapEntry;
-    *end = (&*((*self_0).field_map_entries).offset(slice.index as isize) as *const TSFieldMapEntry)
-        .offset(slice.length as libc::c_int as isize);
 }
 #[inline]
 unsafe extern "C" fn ts_language_aliases_for_symbol(
@@ -665,15 +633,59 @@ unsafe extern "C" fn ts_language_aliases_for_symbol(
     }
 }
 #[inline]
+unsafe extern "C" fn ts_language_state_is_primary(
+    mut self_0: *const TSLanguage,
+    mut state: TSStateId,
+) -> bool {
+    if (*self_0).version >= 14 as libc::c_int as uint32_t {
+        return state as libc::c_int
+            == *((*self_0).primary_state_ids).offset(state as isize) as libc::c_int;
+    } else {
+        return 1 as libc::c_int != 0;
+    };
+}
+#[inline]
+unsafe extern "C" fn point_lte(mut a: TSPoint, mut b: TSPoint) -> bool {
+    return a.row < b.row || a.row == b.row && a.column <= b.column;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_symbol(mut self_0: Subtree) -> TSSymbol {
+    return (if (self_0.data).is_inline() as libc::c_int != 0 {
+        self_0.data.symbol as libc::c_int
+    } else {
+        (*self_0.ptr).symbol as libc::c_int
+    }) as TSSymbol;
+}
+#[inline]
+unsafe extern "C" fn point_gte(mut a: TSPoint, mut b: TSPoint) -> bool {
+    return a.row > b.row || a.row == b.row && a.column >= b.column;
+}
+#[inline]
+unsafe extern "C" fn ts_subtree_is_repetition(mut self_0: Subtree) -> uint32_t {
+    return (if (self_0.data).is_inline() as libc::c_int != 0 {
+        0 as libc::c_int
+    } else {
+        (!(*self_0.ptr).named()
+            && !(*self_0.ptr).visible()
+            && (*self_0.ptr).child_count != 0 as libc::c_int as uint32_t) as libc::c_int
+    }) as uint32_t;
+}
+#[inline]
 unsafe extern "C" fn ts_tree_cursor_current_subtree(mut _self: *const TSTreeCursor) -> Subtree {
     let mut self_0: *const TreeCursor = _self as *const TreeCursor;
-    if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) < (*self_0).stack.size
-    {
+    if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size {
     } else {
         panic!();
     }
+    'c_21082: {
+        if ((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) < (*self_0).stack.size
+        {
+        } else {
+            panic!();
+        }
+    };
     let mut last_entry: *mut TreeCursorEntry = &mut *((*self_0).stack.contents)
-        .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+        .offset(((*self_0).stack.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
         as *mut TreeCursorEntry;
     return *(*last_entry).subtree;
 }
@@ -745,6 +757,7 @@ unsafe extern "C" fn ts_decode_utf8(
             && {
                 *code_point = *code_point << 6 as libc::c_int | __t as libc::c_int;
                 i = i.wrapping_add(1);
+                i;
                 1 as libc::c_int != 0
             })
         {
@@ -765,7 +778,7 @@ unsafe extern "C" fn stream_advance(mut self_0: *mut Stream) -> bool {
             ((*self_0).end).offset_from((*self_0).input) as libc::c_long as uint32_t,
             &mut (*self_0).next,
         );
-        if size > 0 as libc::c_int as libc::c_uint {
+        if size > 0 as libc::c_int as uint32_t {
             (*self_0).next_size = size as uint8_t;
             return 1 as libc::c_int != 0;
         }
@@ -863,6 +876,7 @@ unsafe extern "C" fn capture_list_pool_reset(mut self_0: *mut CaptureListPool) {
     while (i as libc::c_int) < (*self_0).list.size as uint16_t as libc::c_int {
         (*((*self_0).list.contents).offset(i as isize)).size = 4294967295 as libc::c_uint;
         i = i.wrapping_add(1);
+        i;
     }
     (*self_0).free_capture_list_count = (*self_0).list.size;
 }
@@ -873,6 +887,7 @@ unsafe extern "C" fn capture_list_pool_delete(mut self_0: *mut CaptureListPool) 
             &mut *((*self_0).list.contents).offset(i as isize) as *mut CaptureList as *mut Array,
         );
         i = i.wrapping_add(1);
+        i;
     }
     _array__delete(&mut (*self_0).list as *mut C2RustUnnamed_14 as *mut Array);
 }
@@ -880,7 +895,7 @@ unsafe extern "C" fn capture_list_pool_get(
     mut self_0: *const CaptureListPool,
     mut id: uint16_t,
 ) -> *const CaptureList {
-    if id as libc::c_uint >= (*self_0).list.size {
+    if id as uint32_t >= (*self_0).list.size {
         return &(*self_0).empty_list;
     }
     return &mut *((*self_0).list.contents).offset(id as isize) as *mut CaptureList;
@@ -889,27 +904,35 @@ unsafe extern "C" fn capture_list_pool_get_mut(
     mut self_0: *mut CaptureListPool,
     mut id: uint16_t,
 ) -> *mut CaptureList {
-    if (id as libc::c_uint) < (*self_0).list.size {
+    if (id as uint32_t) < (*self_0).list.size {
     } else {
         panic!();
     }
+    'c_22440: {
+        if (id as uint32_t) < (*self_0).list.size {
+        } else {
+            panic!();
+        }
+    };
     return &mut *((*self_0).list.contents).offset(id as isize) as *mut CaptureList;
 }
 unsafe extern "C" fn capture_list_pool_is_empty(mut self_0: *const CaptureListPool) -> bool {
-    return (*self_0).free_capture_list_count == 0 as libc::c_int as libc::c_uint
+    return (*self_0).free_capture_list_count == 0 as libc::c_int as uint32_t
         && (*self_0).list.size >= (*self_0).max_capture_list_count;
 }
 unsafe extern "C" fn capture_list_pool_acquire(mut self_0: *mut CaptureListPool) -> uint16_t {
-    if (*self_0).free_capture_list_count > 0 as libc::c_int as libc::c_uint {
+    if (*self_0).free_capture_list_count > 0 as libc::c_int as uint32_t {
         let mut i: uint16_t = 0 as libc::c_int as uint16_t;
         while (i as libc::c_int) < (*self_0).list.size as uint16_t as libc::c_int {
             if (*((*self_0).list.contents).offset(i as isize)).size == 4294967295 as libc::c_uint {
                 (*((*self_0).list.contents).offset(i as isize)).size = 0 as libc::c_int as uint32_t;
                 (*self_0).free_capture_list_count =
                     ((*self_0).free_capture_list_count).wrapping_sub(1);
+                (*self_0).free_capture_list_count;
                 return i;
             }
             i = i.wrapping_add(1);
+            i;
         }
     }
     let mut i_0: uint32_t = (*self_0).list.size;
@@ -935,11 +958,12 @@ unsafe extern "C" fn capture_list_pool_acquire(mut self_0: *mut CaptureListPool)
     return i_0 as uint16_t;
 }
 unsafe extern "C" fn capture_list_pool_release(mut self_0: *mut CaptureListPool, mut id: uint16_t) {
-    if id as libc::c_uint >= (*self_0).list.size {
+    if id as uint32_t >= (*self_0).list.size {
         return;
     }
     (*((*self_0).list.contents).offset(id as isize)).size = 4294967295 as libc::c_uint;
     (*self_0).free_capture_list_count = ((*self_0).free_capture_list_count).wrapping_add(1);
+    (*self_0).free_capture_list_count;
 }
 unsafe extern "C" fn quantifier_mul(
     mut left: TSQuantifier,
@@ -1064,13 +1088,19 @@ unsafe extern "C" fn capture_quantifier_for_id(
     mut self_0: *const CaptureQuantifiers,
     mut id: uint16_t,
 ) -> TSQuantifier {
-    return (if (*self_0).size <= id as libc::c_uint {
+    return (if (*self_0).size <= id as uint32_t {
         TSQuantifierZero as libc::c_int as libc::c_uint
     } else {
         if (id as uint32_t) < (*self_0).size {
         } else {
             panic!();
         }
+        'c_19365: {
+            if (id as uint32_t) < (*self_0).size {
+            } else {
+                panic!();
+            }
+        };
         *(&mut *((*self_0).contents).offset(id as isize) as *mut uint8_t) as TSQuantifier
             as libc::c_uint
     }) as TSQuantifier;
@@ -1080,34 +1110,38 @@ unsafe extern "C" fn capture_quantifiers_add_for_id(
     mut id: uint16_t,
     mut quantifier: TSQuantifier,
 ) {
-    if (*self_0).size <= id as libc::c_uint {
-        if !(((id as libc::c_int + 1 as libc::c_int) as libc::c_uint).wrapping_sub((*self_0).size)
-            == 0 as libc::c_int as libc::c_uint)
+    if (*self_0).size <= id as uint32_t {
+        if !(((id as libc::c_int + 1 as libc::c_int) as uint32_t).wrapping_sub((*self_0).size)
+            == 0 as libc::c_int as uint32_t)
         {
             _array__grow(
                 self_0 as *mut Array,
-                ((id as libc::c_int + 1 as libc::c_int) as libc::c_uint)
-                    .wrapping_sub((*self_0).size),
+                ((id as libc::c_int + 1 as libc::c_int) as uint32_t).wrapping_sub((*self_0).size),
                 ::core::mem::size_of::<uint8_t>() as libc::c_ulong,
             );
             std::ptr::write_bytes(
                 ((*self_0).contents).offset((*self_0).size as isize) as *mut libc::c_void,
                 (0 as libc::c_int) as u8,
-                ((((id as libc::c_int + 1 as libc::c_int) as libc::c_uint)
-                    .wrapping_sub((*self_0).size) as libc::c_ulong)
+                ((((id as libc::c_int + 1 as libc::c_int) as uint32_t).wrapping_sub((*self_0).size)
+                    as libc::c_ulong)
                     .wrapping_mul(::core::mem::size_of::<uint8_t>() as libc::c_ulong))
                     as usize,
             );
-            (*self_0).size = ((*self_0).size as libc::c_uint).wrapping_add(
-                ((id as libc::c_int + 1 as libc::c_int) as libc::c_uint)
-                    .wrapping_sub((*self_0).size),
-            ) as uint32_t as uint32_t;
+            (*self_0).size = ((*self_0).size).wrapping_add(
+                ((id as libc::c_int + 1 as libc::c_int) as uint32_t).wrapping_sub((*self_0).size),
+            );
         }
     }
     if (id as uint32_t) < (*self_0).size {
     } else {
         panic!();
     }
+    'c_13784: {
+        if (id as uint32_t) < (*self_0).size {
+        } else {
+            panic!();
+        }
+    };
     let mut own_quantifier: *mut uint8_t =
         &mut *((*self_0).contents).offset(id as isize) as *mut uint8_t;
     *own_quantifier = quantifier_add(*own_quantifier as TSQuantifier, quantifier) as uint8_t;
@@ -1117,8 +1151,7 @@ unsafe extern "C" fn capture_quantifiers_add_all(
     mut quantifiers: *mut CaptureQuantifiers,
 ) {
     if (*self_0).size < (*quantifiers).size {
-        if !(((*quantifiers).size).wrapping_sub((*self_0).size) == 0 as libc::c_int as libc::c_uint)
-        {
+        if !(((*quantifiers).size).wrapping_sub((*self_0).size) == 0 as libc::c_int as uint32_t) {
             _array__grow(
                 self_0 as *mut Array,
                 ((*quantifiers).size).wrapping_sub((*self_0).size),
@@ -1131,9 +1164,8 @@ unsafe extern "C" fn capture_quantifiers_add_all(
                     .wrapping_mul(::core::mem::size_of::<uint8_t>() as libc::c_ulong))
                     as usize,
             );
-            (*self_0).size = ((*self_0).size as libc::c_uint)
-                .wrapping_add(((*quantifiers).size).wrapping_sub((*self_0).size))
-                as uint32_t as uint32_t;
+            (*self_0).size =
+                ((*self_0).size).wrapping_add(((*quantifiers).size).wrapping_sub((*self_0).size));
         }
     }
     let mut id: uint16_t = 0 as libc::c_int as uint16_t;
@@ -1142,17 +1174,30 @@ unsafe extern "C" fn capture_quantifiers_add_all(
         } else {
             panic!();
         }
+        'c_14895: {
+            if (id as uint32_t) < (*quantifiers).size {
+            } else {
+                panic!();
+            }
+        };
         let mut quantifier: *mut uint8_t =
             &mut *((*quantifiers).contents).offset(id as isize) as *mut uint8_t;
         if (id as uint32_t) < (*self_0).size {
         } else {
             panic!();
         }
+        'c_14960: {
+            if (id as uint32_t) < (*self_0).size {
+            } else {
+                panic!();
+            }
+        };
         let mut own_quantifier: *mut uint8_t =
             &mut *((*self_0).contents).offset(id as isize) as *mut uint8_t;
         *own_quantifier =
             quantifier_add(*own_quantifier as TSQuantifier, *quantifier as TSQuantifier) as uint8_t;
         id = id.wrapping_add(1);
+        id;
     }
 }
 unsafe extern "C" fn capture_quantifiers_mul(
@@ -1165,10 +1210,17 @@ unsafe extern "C" fn capture_quantifiers_mul(
         } else {
             panic!();
         }
+        'c_13063: {
+            if (id as uint32_t) < (*self_0).size {
+            } else {
+                panic!();
+            }
+        };
         let mut own_quantifier: *mut uint8_t =
             &mut *((*self_0).contents).offset(id as isize) as *mut uint8_t;
         *own_quantifier = quantifier_mul(*own_quantifier as TSQuantifier, quantifier) as uint8_t;
         id = id.wrapping_add(1);
+        id;
     }
 }
 unsafe extern "C" fn capture_quantifiers_join_all(
@@ -1176,8 +1228,7 @@ unsafe extern "C" fn capture_quantifiers_join_all(
     mut quantifiers: *mut CaptureQuantifiers,
 ) {
     if (*self_0).size < (*quantifiers).size {
-        if !(((*quantifiers).size).wrapping_sub((*self_0).size) == 0 as libc::c_int as libc::c_uint)
-        {
+        if !(((*quantifiers).size).wrapping_sub((*self_0).size) == 0 as libc::c_int as uint32_t) {
             _array__grow(
                 self_0 as *mut Array,
                 ((*quantifiers).size).wrapping_sub((*self_0).size),
@@ -1190,9 +1241,8 @@ unsafe extern "C" fn capture_quantifiers_join_all(
                     .wrapping_mul(::core::mem::size_of::<uint8_t>() as libc::c_ulong))
                     as usize,
             );
-            (*self_0).size = ((*self_0).size as libc::c_uint)
-                .wrapping_add(((*quantifiers).size).wrapping_sub((*self_0).size))
-                as uint32_t as uint32_t;
+            (*self_0).size =
+                ((*self_0).size).wrapping_add(((*quantifiers).size).wrapping_sub((*self_0).size));
         }
     }
     let mut id: uint32_t = 0 as libc::c_int as uint32_t;
@@ -1201,18 +1251,31 @@ unsafe extern "C" fn capture_quantifiers_join_all(
         } else {
             panic!();
         }
+        'c_18051: {
+            if id < (*quantifiers).size {
+            } else {
+                panic!();
+            }
+        };
         let mut quantifier: *mut uint8_t =
             &mut *((*quantifiers).contents).offset(id as isize) as *mut uint8_t;
         if id < (*self_0).size {
         } else {
             panic!();
         }
+        'c_18115: {
+            if id < (*self_0).size {
+            } else {
+                panic!();
+            }
+        };
         let mut own_quantifier: *mut uint8_t =
             &mut *((*self_0).contents).offset(id as isize) as *mut uint8_t;
         *own_quantifier =
             quantifier_join(*own_quantifier as TSQuantifier, *quantifier as TSQuantifier)
                 as uint8_t;
         id = id.wrapping_add(1);
+        id;
     }
     let mut id_0: uint32_t = (*quantifiers).size;
     while id_0 < (*self_0).size {
@@ -1220,11 +1283,18 @@ unsafe extern "C" fn capture_quantifiers_join_all(
         } else {
             panic!();
         }
+        'c_17959: {
+            if id_0 < (*self_0).size {
+            } else {
+                panic!();
+            }
+        };
         let mut own_quantifier_0: *mut uint8_t =
             &mut *((*self_0).contents).offset(id_0 as isize) as *mut uint8_t;
         *own_quantifier_0 =
             quantifier_join(*own_quantifier_0 as TSQuantifier, TSQuantifierZero) as uint8_t;
         id_0 = id_0.wrapping_add(1);
+        id_0;
     }
 }
 unsafe extern "C" fn symbol_table_new() -> SymbolTable {
@@ -1272,6 +1342,7 @@ unsafe extern "C" fn symbol_table_id_for_name(
             return i as libc::c_int;
         }
         i = i.wrapping_add(1);
+        i;
     }
     return -(1 as libc::c_int);
 }
@@ -1301,24 +1372,22 @@ unsafe extern "C" fn symbol_table_insert_name(
         };
         init
     };
-    if !(length.wrapping_add(1 as libc::c_int as libc::c_uint) == 0 as libc::c_int as libc::c_uint)
-    {
+    if !(length.wrapping_add(1 as libc::c_int as uint32_t) == 0 as libc::c_int as uint32_t) {
         _array__grow(
             &mut (*self_0).characters as *mut C2RustUnnamed_13 as *mut Array,
-            length.wrapping_add(1 as libc::c_int as libc::c_uint),
+            length.wrapping_add(1 as libc::c_int as uint32_t),
             ::core::mem::size_of::<libc::c_char>() as libc::c_ulong,
         );
         std::ptr::write_bytes(
             ((*self_0).characters.contents).offset((*self_0).characters.size as isize)
                 as *mut libc::c_void,
             (0 as libc::c_int) as u8,
-            ((length.wrapping_add(1 as libc::c_int as libc::c_uint) as libc::c_ulong)
+            ((length.wrapping_add(1 as libc::c_int as uint32_t) as libc::c_ulong)
                 .wrapping_mul(::core::mem::size_of::<libc::c_char>() as libc::c_ulong))
                 as usize,
         );
-        (*self_0).characters.size = ((*self_0).characters.size as libc::c_uint)
-            .wrapping_add(length.wrapping_add(1 as libc::c_int as libc::c_uint))
-            as uint32_t as uint32_t;
+        (*self_0).characters.size = ((*self_0).characters.size)
+            .wrapping_add(length.wrapping_add(1 as libc::c_int as uint32_t));
     }
     std::ptr::copy_nonoverlapping(
         name as *const libc::c_void,
@@ -1326,9 +1395,9 @@ unsafe extern "C" fn symbol_table_insert_name(
             as *mut libc::c_void,
         length as libc::c_ulong,
     );
-    *((*self_0).characters.contents).offset(
-        ((*self_0).characters.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize,
-    ) = 0 as libc::c_int as libc::c_char;
+    *((*self_0).characters.contents)
+        .offset(((*self_0).characters.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize) =
+        0 as libc::c_int as libc::c_char;
     _array__grow(
         &mut (*self_0).slices as *mut C2RustUnnamed_12 as *mut Array,
         1 as libc::c_int as uint32_t,
@@ -1337,7 +1406,7 @@ unsafe extern "C" fn symbol_table_insert_name(
     let fresh6 = (*self_0).slices.size;
     (*self_0).slices.size = ((*self_0).slices.size).wrapping_add(1);
     *((*self_0).slices.contents).offset(fresh6 as isize) = slice;
-    return ((*self_0).slices.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as uint16_t;
+    return ((*self_0).slices.size).wrapping_sub(1 as libc::c_int as uint32_t) as uint16_t;
 }
 unsafe extern "C" fn query_step__new(
     mut symbol: TSSymbol,
@@ -1361,6 +1430,7 @@ unsafe extern "C" fn query_step__new(
     while i < 3 as libc::c_int as libc::c_uint {
         step.capture_ids[i as usize] = NONE;
         i = i.wrapping_add(1);
+        i;
     }
     return step;
 }
@@ -1372,6 +1442,7 @@ unsafe extern "C" fn query_step__add_capture(mut self_0: *mut QueryStep, mut cap
             break;
         } else {
             i = i.wrapping_add(1);
+            i;
         }
     }
 }
@@ -1397,10 +1468,12 @@ unsafe extern "C" fn query_step__remove_capture(
                 (*self_0).capture_ids[i.wrapping_add(1 as libc::c_int as libc::c_uint) as usize] =
                     NONE;
                 i = i.wrapping_add(1);
+                i;
             }
             break;
         } else {
             i = i.wrapping_add(1);
+            i;
         }
     }
 }
@@ -1411,8 +1484,8 @@ unsafe extern "C" fn state_predecessor_map_new(
     return {
         let mut init = StatePredecessorMap {
             contents: crate::core::alloc::ts_calloc(
-                ((*language).state_count as size_t)
-                    .wrapping_mul((256 as libc::c_int + 1 as libc::c_int) as libc::c_ulong),
+                (*language).state_count as size_t
+                    * (256 as libc::c_int + 1 as libc::c_int) as size_t,
                 ::core::mem::size_of::<TSStateId>() as libc::c_ulong,
             ) as *mut TSStateId,
         };
@@ -1429,19 +1502,18 @@ unsafe extern "C" fn state_predecessor_map_add(
     mut state: TSStateId,
     mut predecessor: TSStateId,
 ) {
-    let mut index: size_t =
-        (state as size_t).wrapping_mul((256 as libc::c_int + 1 as libc::c_int) as libc::c_ulong);
+    let mut index: size_t = state as size_t * (256 as libc::c_int + 1 as libc::c_int) as size_t;
     let mut count: *mut TSStateId =
         &mut *((*self_0).contents).offset(index as isize) as *mut TSStateId;
     if *count as libc::c_int == 0 as libc::c_int
         || (*count as libc::c_int) < 256 as libc::c_int
-            && *((*self_0).contents).offset(index.wrapping_add(*count as libc::c_ulong) as isize)
+            && *((*self_0).contents).offset(index.wrapping_add(*count as size_t) as isize)
                 as libc::c_int
                 != predecessor as libc::c_int
     {
         *count = (*count).wrapping_add(1);
-        *((*self_0).contents).offset(index.wrapping_add(*count as libc::c_ulong) as isize) =
-            predecessor;
+        *count;
+        *((*self_0).contents).offset(index.wrapping_add(*count as size_t) as isize) = predecessor;
     }
 }
 #[inline]
@@ -1450,11 +1522,10 @@ unsafe extern "C" fn state_predecessor_map_get(
     mut state: TSStateId,
     mut count: *mut libc::c_uint,
 ) -> *const TSStateId {
-    let mut index: size_t =
-        (state as size_t).wrapping_mul((256 as libc::c_int + 1 as libc::c_int) as libc::c_ulong);
+    let mut index: size_t = state as size_t * (256 as libc::c_int + 1 as libc::c_int) as size_t;
     *count = *((*self_0).contents).offset(index as isize) as libc::c_uint;
     return &mut *((*self_0).contents)
-        .offset(index.wrapping_add(1 as libc::c_int as libc::c_ulong) as isize)
+        .offset(index.wrapping_add(1 as libc::c_int as size_t) as isize)
         as *mut TSStateId;
 }
 unsafe extern "C" fn analysis_state__recursion_depth(
@@ -1468,12 +1539,15 @@ unsafe extern "C" fn analysis_state__recursion_depth(
         while j < i {
             if (*self_0).stack[j as usize].parent_symbol as libc::c_int == symbol as libc::c_int {
                 result = result.wrapping_add(1);
+                result;
                 break;
             } else {
                 j = j.wrapping_add(1);
+                j;
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return result;
 }
@@ -1498,6 +1572,7 @@ unsafe extern "C" fn analysis_state__compare_position(
             return 1 as libc::c_int;
         }
         i = i.wrapping_add(1);
+        i;
     }
     if ((**self_0).depth as libc::c_int) < (**other).depth as libc::c_int {
         return 1 as libc::c_int;
@@ -1552,6 +1627,7 @@ unsafe extern "C" fn analysis_state__compare(
             return 1 as libc::c_int;
         }
         i = i.wrapping_add(1);
+        i;
     }
     return 0 as libc::c_int;
 }
@@ -1580,6 +1656,7 @@ unsafe extern "C" fn analysis_state__has_supertype(
             return 1 as libc::c_int != 0;
         }
         i = i.wrapping_add(1);
+        i;
     }
     return 0 as libc::c_int != 0;
 }
@@ -1611,10 +1688,10 @@ unsafe extern "C" fn analysis_state_set__insert_sorted(
     index = 0 as libc::c_int as libc::c_uint;
     exists = 0 as libc::c_int as libc::c_uint;
     let mut size: uint32_t = ((*self_0).size).wrapping_sub(index);
-    if !(size == 0 as libc::c_int as libc::c_uint) {
+    if !(size == 0 as libc::c_int as uint32_t) {
         let mut comparison: libc::c_int = 0;
-        while size > 1 as libc::c_int as libc::c_uint {
-            let mut half_size: uint32_t = size.wrapping_div(2 as libc::c_int as libc::c_uint);
+        while size > 1 as libc::c_int as uint32_t {
+            let mut half_size: uint32_t = size / 2 as libc::c_int as uint32_t;
             let mut mid_index: uint32_t = index.wrapping_add(half_size);
             comparison = analysis_state__compare(
                 &mut *((*self_0).contents).offset(mid_index as isize),
@@ -1623,7 +1700,7 @@ unsafe extern "C" fn analysis_state_set__insert_sorted(
             if comparison <= 0 as libc::c_int {
                 index = mid_index;
             }
-            size = (size as libc::c_uint).wrapping_sub(half_size) as uint32_t as uint32_t;
+            size = size.wrapping_sub(half_size);
         }
         comparison = analysis_state__compare(
             &mut *((*self_0).contents).offset(index as isize),
@@ -1686,6 +1763,7 @@ unsafe extern "C" fn analysis_state_set__delete(mut self_0: *mut AnalysisStateSe
     while i < (*self_0).size {
         crate::core::alloc::ts_free(*((*self_0).contents).offset(i as isize) as *mut libc::c_void);
         i = i.wrapping_add(1);
+        i;
     }
     _array__delete(self_0 as *mut Array);
 }
@@ -1794,12 +1872,12 @@ unsafe extern "C" fn ts_query__pattern_map_search(
 ) -> bool {
     let mut base_index: uint32_t = (*self_0).wildcard_root_pattern_count as uint32_t;
     let mut size: uint32_t = ((*self_0).pattern_map.size).wrapping_sub(base_index);
-    if size == 0 as libc::c_int as libc::c_uint {
+    if size == 0 as libc::c_int as uint32_t {
         *result = base_index;
         return 0 as libc::c_int != 0;
     }
-    while size > 1 as libc::c_int as libc::c_uint {
-        let mut half_size: uint32_t = size.wrapping_div(2 as libc::c_int as libc::c_uint);
+    while size > 1 as libc::c_int as uint32_t {
+        let mut half_size: uint32_t = size / 2 as libc::c_int as uint32_t;
         let mut mid_index: uint32_t = base_index.wrapping_add(half_size);
         let mut mid_symbol: TSSymbol = (*((*self_0).steps.contents).offset(
             (*((*self_0).pattern_map.contents).offset(mid_index as isize)).step_index as isize,
@@ -1808,7 +1886,7 @@ unsafe extern "C" fn ts_query__pattern_map_search(
         if needle as libc::c_int > mid_symbol as libc::c_int {
             base_index = mid_index;
         }
-        size = (size as libc::c_uint).wrapping_sub(half_size) as uint32_t as uint32_t;
+        size = size.wrapping_sub(half_size);
     }
     let mut symbol: TSSymbol = (*((*self_0).steps.contents).offset(
         (*((*self_0).pattern_map.contents).offset(base_index as isize)).step_index as isize,
@@ -1816,6 +1894,7 @@ unsafe extern "C" fn ts_query__pattern_map_search(
     .symbol;
     if needle as libc::c_int > symbol as libc::c_int {
         base_index = base_index.wrapping_add(1);
+        base_index;
         if base_index < (*self_0).pattern_map.size {
             symbol = (*((*self_0).steps.contents).offset(
                 (*((*self_0).pattern_map.contents).offset(base_index as isize)).step_index as isize,
@@ -1845,6 +1924,7 @@ unsafe extern "C" fn ts_query__pattern_map_insert(
             break;
         }
         index = index.wrapping_add(1);
+        index;
     }
     _array__splice(
         &mut (*self_0).pattern_map as *mut C2RustUnnamed_9 as *mut Array,
@@ -1870,14 +1950,15 @@ unsafe extern "C" fn ts_query__perform_analysis(
             (*analysis).did_abort = 1 as libc::c_int != 0;
             break;
         } else {
-            if (*analysis).states.size == 0 as libc::c_int as libc::c_uint {
-                if !((*analysis).deeper_states.size > 0 as libc::c_int as libc::c_uint
+            if (*analysis).states.size == 0 as libc::c_int as uint32_t {
+                if !((*analysis).deeper_states.size > 0 as libc::c_int as uint32_t
                     && (*analysis).final_step_indices.size > prev_final_step_count)
                 {
                     break;
                 }
                 prev_final_step_count = (*analysis).final_step_indices.size;
                 recursion_depth_limit = recursion_depth_limit.wrapping_add(1);
+                recursion_depth_limit;
                 let mut _states: AnalysisStateSet = (*analysis).states;
                 (*analysis).states = (*analysis).deeper_states;
                 (*analysis).deeper_states = _states;
@@ -1891,19 +1972,27 @@ unsafe extern "C" fn ts_query__perform_analysis(
                 while j < (*analysis).states.size {
                     let state: *mut AnalysisState =
                         *((*analysis).states.contents).offset(j as isize);
-                    if (*analysis).next_states.size > 0 as libc::c_int as libc::c_uint {
-                        if ((*analysis).next_states.size)
-                            .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                    if (*analysis).next_states.size > 0 as libc::c_int as uint32_t {
+                        if ((*analysis).next_states.size).wrapping_sub(1 as libc::c_int as uint32_t)
                             < (*analysis).next_states.size
                         {
                         } else {
                             panic!();
                         }
+                        'c_6807: {
+                            if ((*analysis).next_states.size)
+                                .wrapping_sub(1 as libc::c_int as uint32_t)
+                                < (*analysis).next_states.size
+                            {
+                            } else {
+                                panic!();
+                            }
+                        };
                         let mut comparison: libc::c_int = analysis_state__compare_position(
                             &state,
                             &mut *((*analysis).next_states.contents).offset(
                                 ((*analysis).next_states.size)
-                                    .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                                    .wrapping_sub(1 as libc::c_int as uint32_t)
                                     as isize,
                             ),
                         );
@@ -1922,6 +2011,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                     *((*analysis).states.contents).offset(j as isize),
                                 );
                                 j = j.wrapping_add(1);
+                                j;
                             }
                             break;
                         } else {
@@ -1948,11 +2038,11 @@ unsafe extern "C" fn ts_query__perform_analysis(
                             exists = 0 as libc::c_int as libc::c_uint;
                             let mut size: uint32_t =
                                 ((*subgraphs).size).wrapping_sub(subgraph_index);
-                            if !(size == 0 as libc::c_int as libc::c_uint) {
+                            if !(size == 0 as libc::c_int as uint32_t) {
                                 let mut comparison_0: libc::c_int = 0;
-                                while size > 1 as libc::c_int as libc::c_uint {
+                                while size > 1 as libc::c_int as uint32_t {
                                     let mut half_size: uint32_t =
-                                        size.wrapping_div(2 as libc::c_int as libc::c_uint);
+                                        size / 2 as libc::c_int as uint32_t;
                                     let mut mid_index: uint32_t =
                                         subgraph_index.wrapping_add(half_size);
                                     comparison_0 = (*((*subgraphs).contents)
@@ -1963,9 +2053,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                     if comparison_0 <= 0 as libc::c_int {
                                         subgraph_index = mid_index;
                                     }
-                                    size = (size as libc::c_uint).wrapping_sub(half_size)
-                                        as uint32_t
-                                        as uint32_t;
+                                    size = size.wrapping_sub(half_size);
                                 }
                                 comparison_0 =
                                     (*((*subgraphs).contents).offset(subgraph_index as isize))
@@ -2013,6 +2101,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                         if !(*action).shift.extra {
                                             successor.state = (*action).shift.state;
                                             successor.set_child_index(successor.child_index() + 1);
+                                            successor.child_index();
                                         }
                                     } else {
                                         if !(lookahead_iterator.next_state as libc::c_int
@@ -2022,17 +2111,18 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                         }
                                         successor.state = lookahead_iterator.next_state;
                                         successor.set_child_index(successor.child_index() + 1);
+                                        successor.child_index();
                                     }
                                     let mut node_index: libc::c_uint = 0;
                                     node_index = 0 as libc::c_int as libc::c_uint;
                                     exists = 0 as libc::c_int as libc::c_uint;
                                     let mut size_0: uint32_t =
                                         ((*subgraph).nodes.size).wrapping_sub(node_index);
-                                    if !(size_0 == 0 as libc::c_int as libc::c_uint) {
+                                    if !(size_0 == 0 as libc::c_int as uint32_t) {
                                         let mut comparison_1: libc::c_int = 0;
-                                        while size_0 > 1 as libc::c_int as libc::c_uint {
-                                            let mut half_size_0: uint32_t = size_0
-                                                .wrapping_div(2 as libc::c_int as libc::c_uint);
+                                        while size_0 > 1 as libc::c_int as uint32_t {
+                                            let mut half_size_0: uint32_t =
+                                                size_0 / 2 as libc::c_int as uint32_t;
                                             let mut mid_index_0: uint32_t =
                                                 node_index.wrapping_add(half_size_0);
                                             comparison_1 = analysis_subgraph_node__compare(
@@ -2043,10 +2133,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                             if comparison_1 <= 0 as libc::c_int {
                                                 node_index = mid_index_0;
                                             }
-                                            size_0 = (size_0 as libc::c_uint)
-                                                .wrapping_sub(half_size_0)
-                                                as uint32_t
-                                                as uint32_t;
+                                            size_0 = size_0.wrapping_sub(half_size_0);
                                         }
                                         comparison_1 = analysis_subgraph_node__compare(
                                             &mut *((*subgraph).nodes.contents)
@@ -2116,6 +2203,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                                     break;
                                                 } else {
                                                     field_map = field_map.offset(1);
+                                                    field_map;
                                                 }
                                             }
                                         }
@@ -2160,7 +2248,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                             {
                                                 does_match = 0 as libc::c_int != 0;
                                             }
-                                        } else if sym as libc::c_uint
+                                        } else if sym as uint32_t
                                             >= (*(*self_0).language).token_count
                                         {
                                             if !(*next_state_top).done() {
@@ -2173,6 +2261,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                                 } else {
                                                     next_state.depth =
                                                         (next_state.depth).wrapping_add(1);
+                                                    next_state.depth;
                                                     next_state_top =
                                                         analysis_state__top(&mut next_state);
                                                 }
@@ -2203,6 +2292,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                             && (*next_state_top).done() as libc::c_int != 0
                                         {
                                             next_state.depth = (next_state.depth).wrapping_sub(1);
+                                            next_state.depth;
                                             next_state_top = analysis_state__top(&mut next_state);
                                         }
                                         let mut next_step: *const QueryStep = step;
@@ -2210,6 +2300,7 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                             loop {
                                                 next_state.step_index =
                                                     (next_state.step_index).wrapping_add(1);
+                                                next_state.step_index;
                                                 next_step = &mut *((*self_0).steps.contents)
                                                     .offset(next_state.step_index as isize)
                                                     as *mut QueryStep;
@@ -2230,7 +2321,9 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                             if (*next_step).is_pass_through() {
                                                 next_state.step_index =
                                                     (next_state.step_index).wrapping_add(1);
+                                                next_state.step_index;
                                                 next_step = next_step.offset(1);
+                                                next_step;
                                             } else {
                                                 if !(*next_step).is_dead_end() {
                                                     let mut did_finish_pattern: bool =
@@ -2248,18 +2341,16 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                                             .finished_parent_symbols
                                                             .size)
                                                             .wrapping_sub(_index);
-                                                        if !(size_1
-                                                            == 0 as libc::c_int as libc::c_uint)
+                                                        if !(size_1 == 0 as libc::c_int as uint32_t)
                                                         {
                                                             let mut comparison_2: libc::c_int = 0;
                                                             while size_1
-                                                                > 1 as libc::c_int as libc::c_uint
+                                                                > 1 as libc::c_int as uint32_t
                                                             {
                                                                 let mut half_size_1: uint32_t =
-                                                                    size_1.wrapping_div(
-                                                                        2 as libc::c_int
-                                                                            as libc::c_uint,
-                                                                    );
+                                                                    size_1
+                                                                        / 2 as libc::c_int
+                                                                            as uint32_t;
                                                                 let mut mid_index_1: uint32_t =
                                                                     _index
                                                                         .wrapping_add(half_size_1);
@@ -2274,10 +2365,8 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                                                 {
                                                                     _index = mid_index_1;
                                                                 }
-                                                                size_1 = (size_1 as libc::c_uint)
-                                                                    .wrapping_sub(half_size_1)
-                                                                    as uint32_t
-                                                                    as uint32_t;
+                                                                size_1 = size_1
+                                                                    .wrapping_sub(half_size_1);
                                                             }
                                                             comparison_2 = *((*analysis)
                                                                 .finished_parent_symbols
@@ -2325,18 +2414,16 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                                         let mut size_2: uint32_t =
                                                             ((*analysis).final_step_indices.size)
                                                                 .wrapping_sub(_index_0);
-                                                        if !(size_2
-                                                            == 0 as libc::c_int as libc::c_uint)
+                                                        if !(size_2 == 0 as libc::c_int as uint32_t)
                                                         {
                                                             let mut comparison_3: libc::c_int = 0;
                                                             while size_2
-                                                                > 1 as libc::c_int as libc::c_uint
+                                                                > 1 as libc::c_int as uint32_t
                                                             {
                                                                 let mut half_size_2: uint32_t =
-                                                                    size_2.wrapping_div(
-                                                                        2 as libc::c_int
-                                                                            as libc::c_uint,
-                                                                    );
+                                                                    size_2
+                                                                        / 2 as libc::c_int
+                                                                            as uint32_t;
                                                                 let mut mid_index_2: uint32_t =
                                                                     _index_0
                                                                         .wrapping_add(half_size_2);
@@ -2351,10 +2438,8 @@ unsafe extern "C" fn ts_query__perform_analysis(
                                                                 {
                                                                     _index_0 = mid_index_2;
                                                                 }
-                                                                size_2 = (size_2 as libc::c_uint)
-                                                                    .wrapping_sub(half_size_2)
-                                                                    as uint32_t
-                                                                    as uint32_t;
+                                                                size_2 = size_2
+                                                                    .wrapping_sub(half_size_2);
                                                             }
                                                             comparison_3 = *((*analysis)
                                                                 .final_step_indices
@@ -2422,12 +2507,14 @@ unsafe extern "C" fn ts_query__perform_analysis(
                         _ => {}
                     }
                     j = j.wrapping_add(1);
+                    j;
                 }
                 let mut _states_0: AnalysisStateSet = (*analysis).states;
                 (*analysis).states = (*analysis).next_states;
                 (*analysis).next_states = _states_0;
             }
             iteration = iteration.wrapping_add(1);
+            iteration;
         }
     }
 }
@@ -2464,6 +2551,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     let mut parent_step_indices: C2RustUnnamed_18 = {
         let mut init = C2RustUnnamed_18 {
@@ -2508,6 +2596,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 }
                 has_children = 1 as libc::c_int != 0;
                 j = j.wrapping_add(1);
+                j;
             }
             if has_children as libc::c_int != 0 && !is_wildcard {
                 _array__grow(
@@ -2521,6 +2610,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             }
         }
         i_0 = i_0.wrapping_add(1);
+        i_0;
     }
     let mut subgraphs: AnalysisSubgraphArray = {
         let mut init = AnalysisSubgraphArray {
@@ -2556,10 +2646,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
         _index = 0 as libc::c_int as libc::c_uint;
         _exists = 0 as libc::c_int as libc::c_uint;
         let mut size: uint32_t = (subgraphs.size).wrapping_sub(_index);
-        if !(size == 0 as libc::c_int as libc::c_uint) {
+        if !(size == 0 as libc::c_int as uint32_t) {
             let mut comparison: libc::c_int = 0;
-            while size > 1 as libc::c_int as libc::c_uint {
-                let mut half_size: uint32_t = size.wrapping_div(2 as libc::c_int as libc::c_uint);
+            while size > 1 as libc::c_int as uint32_t {
+                let mut half_size: uint32_t = size / 2 as libc::c_int as uint32_t;
                 let mut mid_index: uint32_t = _index.wrapping_add(half_size);
                 comparison = (*(subgraphs.contents).offset(mid_index as isize)).symbol
                     as libc::c_int
@@ -2567,7 +2657,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 if comparison <= 0 as libc::c_int {
                     _index = mid_index;
                 }
-                size = (size as libc::c_uint).wrapping_sub(half_size) as uint32_t as uint32_t;
+                size = size.wrapping_sub(half_size);
             }
             comparison = (*(subgraphs.contents).offset(_index as isize)).symbol as libc::c_int
                 - subgraph.symbol as libc::c_int;
@@ -2588,6 +2678,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             );
         }
         i_1 = i_1.wrapping_add(1);
+        i_1;
     }
     let mut sym: TSSymbol = (*(*self_0).language).token_count as uint16_t;
     while (sym as libc::c_int) < (*(*self_0).language).symbol_count as uint16_t as libc::c_int {
@@ -2613,11 +2704,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             _index_0 = 0 as libc::c_int as libc::c_uint;
             _exists_0 = 0 as libc::c_int as libc::c_uint;
             let mut size_0: uint32_t = (subgraphs.size).wrapping_sub(_index_0);
-            if !(size_0 == 0 as libc::c_int as libc::c_uint) {
+            if !(size_0 == 0 as libc::c_int as uint32_t) {
                 let mut comparison_0: libc::c_int = 0;
-                while size_0 > 1 as libc::c_int as libc::c_uint {
-                    let mut half_size_0: uint32_t =
-                        size_0.wrapping_div(2 as libc::c_int as libc::c_uint);
+                while size_0 > 1 as libc::c_int as uint32_t {
+                    let mut half_size_0: uint32_t = size_0 / 2 as libc::c_int as uint32_t;
                     let mut mid_index_0: uint32_t = _index_0.wrapping_add(half_size_0);
                     comparison_0 = (*(subgraphs.contents).offset(mid_index_0 as isize)).symbol
                         as libc::c_int
@@ -2625,8 +2715,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                     if comparison_0 <= 0 as libc::c_int {
                         _index_0 = mid_index_0;
                     }
-                    size_0 =
-                        (size_0 as libc::c_uint).wrapping_sub(half_size_0) as uint32_t as uint32_t;
+                    size_0 = size_0.wrapping_sub(half_size_0);
                 }
                 comparison_0 = (*(subgraphs.contents).offset(_index_0 as isize)).symbol
                     as libc::c_int
@@ -2649,6 +2738,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             }
         }
         sym = sym.wrapping_add(1);
+        sym;
     }
     let mut predecessor_map: StatePredecessorMap = state_predecessor_map_new((*self_0).language);
     let mut state: TSStateId = 1 as libc::c_int as TSStateId;
@@ -2678,11 +2768,11 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             exists = 0 as libc::c_int as libc::c_uint;
                             let mut size_1: uint32_t =
                                 (subgraphs.size).wrapping_sub(subgraph_index);
-                            if !(size_1 == 0 as libc::c_int as libc::c_uint) {
+                            if !(size_1 == 0 as libc::c_int as uint32_t) {
                                 let mut comparison_1: libc::c_int = 0;
-                                while size_1 > 1 as libc::c_int as libc::c_uint {
+                                while size_1 > 1 as libc::c_int as uint32_t {
                                     let mut half_size_1: uint32_t =
-                                        size_1.wrapping_div(2 as libc::c_int as libc::c_uint);
+                                        size_1 / 2 as libc::c_int as uint32_t;
                                     let mut mid_index_1: uint32_t =
                                         subgraph_index.wrapping_add(half_size_1);
                                     comparison_1 =
@@ -2692,9 +2782,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                                     if comparison_1 <= 0 as libc::c_int {
                                         subgraph_index = mid_index_1;
                                     }
-                                    size_1 = (size_1 as libc::c_uint).wrapping_sub(half_size_1)
-                                        as uint32_t
-                                        as uint32_t;
+                                    size_1 = size_1.wrapping_sub(half_size_1);
                                 }
                                 comparison_1 =
                                     (*(subgraphs.contents).offset(subgraph_index as isize)).symbol
@@ -2711,17 +2799,26 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                                 let mut subgraph_1: *mut AnalysisSubgraph =
                                     &mut *(subgraphs.contents).offset(subgraph_index as isize)
                                         as *mut AnalysisSubgraph;
-                                if (*subgraph_1).nodes.size == 0 as libc::c_int as libc::c_uint || {
+                                if (*subgraph_1).nodes.size == 0 as libc::c_int as uint32_t || {
                                     if ((*subgraph_1).nodes.size)
-                                        .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                                        .wrapping_sub(1 as libc::c_int as uint32_t)
                                         < (*subgraph_1).nodes.size
                                     {
                                     } else {
                                         panic!();
                                     }
+                                    'c_10481: {
+                                        if ((*subgraph_1).nodes.size)
+                                            .wrapping_sub(1 as libc::c_int as uint32_t)
+                                            < (*subgraph_1).nodes.size
+                                        {
+                                        } else {
+                                            panic!();
+                                        }
+                                    };
                                     (*(&mut *((*subgraph_1).nodes.contents).offset(
                                         ((*subgraph_1).nodes.size)
-                                            .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                                            .wrapping_sub(1 as libc::c_int as uint32_t)
                                             as isize,
                                     )
                                         as *mut AnalysisSubgraphNode))
@@ -2752,6 +2849,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                                 }
                             }
                             symbol = symbol.offset(1);
+                            symbol;
                         }
                     } else if (*action).type_ as libc::c_int
                         == TSParseActionTypeShift as libc::c_int
@@ -2761,6 +2859,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         state_predecessor_map_add(&mut predecessor_map, next_state, state);
                     }
                     i_2 = i_2.wrapping_add(1);
+                    i_2;
                 }
             } else if lookahead_iterator.next_state as libc::c_int != 0 as libc::c_int {
                 if lookahead_iterator.next_state as libc::c_int != state as libc::c_int {
@@ -2784,11 +2883,11 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         subgraph_index = 0 as libc::c_int as libc::c_uint;
                         exists = 0 as libc::c_int as libc::c_uint;
                         let mut size_2: uint32_t = (subgraphs.size).wrapping_sub(subgraph_index);
-                        if !(size_2 == 0 as libc::c_int as libc::c_uint) {
+                        if !(size_2 == 0 as libc::c_int as uint32_t) {
                             let mut comparison_2: libc::c_int = 0;
-                            while size_2 > 1 as libc::c_int as libc::c_uint {
+                            while size_2 > 1 as libc::c_int as uint32_t {
                                 let mut half_size_2: uint32_t =
-                                    size_2.wrapping_div(2 as libc::c_int as libc::c_uint);
+                                    size_2 / 2 as libc::c_int as uint32_t;
                                 let mut mid_index_2: uint32_t =
                                     subgraph_index.wrapping_add(half_size_2);
                                 comparison_2 = (*(subgraphs.contents).offset(mid_index_2 as isize))
@@ -2798,9 +2897,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                                 if comparison_2 <= 0 as libc::c_int {
                                     subgraph_index = mid_index_2;
                                 }
-                                size_2 = (size_2 as libc::c_uint).wrapping_sub(half_size_2)
-                                    as uint32_t
-                                    as uint32_t;
+                                size_2 = size_2.wrapping_sub(half_size_2);
                             }
                             comparison_2 = (*(subgraphs.contents).offset(subgraph_index as isize))
                                 .symbol as libc::c_int
@@ -2816,24 +2913,30 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             let mut subgraph_2: *mut AnalysisSubgraph = &mut *(subgraphs.contents)
                                 .offset(subgraph_index as isize)
                                 as *mut AnalysisSubgraph;
-                            if (*subgraph_2).start_states.size == 0 as libc::c_int as libc::c_uint
-                                || {
+                            if (*subgraph_2).start_states.size == 0 as libc::c_int as uint32_t || {
+                                if ((*subgraph_2).start_states.size)
+                                    .wrapping_sub(1 as libc::c_int as uint32_t)
+                                    < (*subgraph_2).start_states.size
+                                {
+                                } else {
+                                    panic!();
+                                }
+                                'c_9758: {
                                     if ((*subgraph_2).start_states.size)
-                                        .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                                        .wrapping_sub(1 as libc::c_int as uint32_t)
                                         < (*subgraph_2).start_states.size
                                     {
                                     } else {
                                         panic!();
                                     }
-                                    *(&mut *((*subgraph_2).start_states.contents).offset(
-                                        ((*subgraph_2).start_states.size)
-                                            .wrapping_sub(1 as libc::c_int as libc::c_uint)
-                                            as isize,
-                                    ) as *mut TSStateId)
-                                        as libc::c_int
-                                        != state as libc::c_int
-                                }
-                            {
+                                };
+                                *(&mut *((*subgraph_2).start_states.contents).offset(
+                                    ((*subgraph_2).start_states.size)
+                                        .wrapping_sub(1 as libc::c_int as uint32_t)
+                                        as isize,
+                                ) as *mut TSStateId) as libc::c_int
+                                    != state as libc::c_int
+                            } {
                                 _array__grow(
                                     &mut (*subgraph_2).start_states as *mut C2RustUnnamed_24
                                         as *mut Array,
@@ -2848,11 +2951,13 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             }
                         }
                         symbol_0 = symbol_0.offset(1);
+                        symbol_0;
                     }
                 }
             }
         }
         state = state.wrapping_add(1);
+        state;
     }
     let mut next_nodes: C2RustUnnamed_20 = {
         let mut init = C2RustUnnamed_20 {
@@ -2866,7 +2971,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
     while i_3 < subgraphs.size {
         let mut subgraph_3: *mut AnalysisSubgraph =
             &mut *(subgraphs.contents).offset(i_3 as isize) as *mut AnalysisSubgraph;
-        if (*subgraph_3).nodes.size == 0 as libc::c_int as libc::c_uint {
+        if (*subgraph_3).nodes.size == 0 as libc::c_int as uint32_t {
             _array__delete(&mut (*subgraph_3).start_states as *mut C2RustUnnamed_24 as *mut Array);
             _array__erase(
                 &mut subgraphs as *mut AnalysisSubgraphArray as *mut Array,
@@ -2874,13 +2979,14 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 i_3,
             );
             i_3 = i_3.wrapping_sub(1);
+            i_3;
         } else {
             _array__assign(
                 &mut next_nodes as *mut C2RustUnnamed_20 as *mut Array,
                 &mut (*subgraph_3).nodes as *mut C2RustUnnamed_23 as *const Array,
                 ::core::mem::size_of::<AnalysisSubgraphNode>() as libc::c_ulong,
             );
-            while next_nodes.size > 0 as libc::c_int as libc::c_uint {
+            while next_nodes.size > 0 as libc::c_int as uint32_t {
                 next_nodes.size = (next_nodes.size).wrapping_sub(1);
                 let mut node: AnalysisSubgraphNode =
                     *(next_nodes.contents).offset(next_nodes.size as isize);
@@ -2911,11 +3017,11 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         index = 0 as libc::c_int as libc::c_uint;
                         exists_0 = 0 as libc::c_int as libc::c_uint;
                         let mut size_3: uint32_t = ((*subgraph_3).nodes.size).wrapping_sub(index);
-                        if !(size_3 == 0 as libc::c_int as libc::c_uint) {
+                        if !(size_3 == 0 as libc::c_int as uint32_t) {
                             let mut comparison_3: libc::c_int = 0;
-                            while size_3 > 1 as libc::c_int as libc::c_uint {
+                            while size_3 > 1 as libc::c_int as uint32_t {
                                 let mut half_size_3: uint32_t =
-                                    size_3.wrapping_div(2 as libc::c_int as libc::c_uint);
+                                    size_3 / 2 as libc::c_int as uint32_t;
                                 let mut mid_index_3: uint32_t = index.wrapping_add(half_size_3);
                                 comparison_3 = analysis_subgraph_node__compare(
                                     &mut *((*subgraph_3).nodes.contents)
@@ -2925,9 +3031,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                                 if comparison_3 <= 0 as libc::c_int {
                                     index = mid_index_3;
                                 }
-                                size_3 = (size_3 as libc::c_uint).wrapping_sub(half_size_3)
-                                    as uint32_t
-                                    as uint32_t;
+                                size_3 = size_3.wrapping_sub(half_size_3);
                             }
                             comparison_3 = analysis_subgraph_node__compare(
                                 &mut *((*subgraph_3).nodes.contents).offset(index as isize),
@@ -2959,11 +3063,13 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             *(next_nodes.contents).offset(fresh14 as isize) = predecessor_node;
                         }
                         j_0 = j_0.wrapping_add(1);
+                        j_0;
                     }
                 }
             }
         }
         i_3 = i_3.wrapping_add(1);
+        i_3;
     }
     let mut all_patterns_are_valid: bool = 1 as libc::c_int != 0;
     let mut analysis: QueryAnalysis = query_analysis__new();
@@ -2981,11 +3087,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             subgraph_index_0 = 0 as libc::c_int as libc::c_uint;
             exists_1 = 0 as libc::c_int as libc::c_uint;
             let mut size_4: uint32_t = (subgraphs.size).wrapping_sub(subgraph_index_0);
-            if !(size_4 == 0 as libc::c_int as libc::c_uint) {
+            if !(size_4 == 0 as libc::c_int as uint32_t) {
                 let mut comparison_4: libc::c_int = 0;
-                while size_4 > 1 as libc::c_int as libc::c_uint {
-                    let mut half_size_4: uint32_t =
-                        size_4.wrapping_div(2 as libc::c_int as libc::c_uint);
+                while size_4 > 1 as libc::c_int as uint32_t {
+                    let mut half_size_4: uint32_t = size_4 / 2 as libc::c_int as uint32_t;
                     let mut mid_index_4: uint32_t = subgraph_index_0.wrapping_add(half_size_4);
                     comparison_4 = (*(subgraphs.contents).offset(mid_index_4 as isize)).symbol
                         as libc::c_int
@@ -2993,8 +3098,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                     if comparison_4 <= 0 as libc::c_int {
                         subgraph_index_0 = mid_index_4;
                     }
-                    size_4 =
-                        (size_4 as libc::c_uint).wrapping_sub(half_size_4) as uint32_t as uint32_t;
+                    size_4 = size_4.wrapping_sub(half_size_4);
                 }
                 comparison_4 = (*(subgraphs.contents).offset(subgraph_index_0 as isize)).symbol
                     as libc::c_int
@@ -3014,11 +3118,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 j_1 = 0 as libc::c_int as uint32_t;
                 child_exists = 0 as libc::c_int as uint32_t;
                 let mut size_5: uint32_t = ((*self_0).step_offsets.size).wrapping_sub(j_1);
-                if !(size_5 == 0 as libc::c_int as libc::c_uint) {
+                if !(size_5 == 0 as libc::c_int as uint32_t) {
                     let mut comparison_5: libc::c_int = 0;
-                    while size_5 > 1 as libc::c_int as libc::c_uint {
-                        let mut half_size_5: uint32_t =
-                            size_5.wrapping_div(2 as libc::c_int as libc::c_uint);
+                    while size_5 > 1 as libc::c_int as uint32_t {
+                        let mut half_size_5: uint32_t = size_5 / 2 as libc::c_int as uint32_t;
                         let mut mid_index_5: uint32_t = j_1.wrapping_add(half_size_5);
                         comparison_5 = (*((*self_0).step_offsets.contents)
                             .offset(mid_index_5 as isize))
@@ -3027,8 +3130,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         if comparison_5 <= 0 as libc::c_int {
                             j_1 = mid_index_5;
                         }
-                        size_5 = (size_5 as libc::c_uint).wrapping_sub(half_size_5) as uint32_t
-                            as uint32_t;
+                        size_5 = size_5.wrapping_sub(half_size_5);
                     }
                     comparison_5 = (*((*self_0).step_offsets.contents).offset(j_1 as isize))
                         .step_index as libc::c_int
@@ -3036,14 +3138,19 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                     if comparison_5 == 0 as libc::c_int {
                         child_exists = 1 as libc::c_int as uint32_t;
                     } else if comparison_5 < 0 as libc::c_int {
-                        j_1 = (j_1 as libc::c_uint).wrapping_add(1 as libc::c_int as libc::c_uint)
-                            as uint32_t as uint32_t;
+                        j_1 = j_1.wrapping_add(1 as libc::c_int as uint32_t);
                     }
                 }
                 if child_exists != 0 {
                 } else {
                     panic!();
                 }
+                'c_8648: {
+                    if child_exists != 0 {
+                    } else {
+                        panic!();
+                    }
+                };
                 *error_offset =
                     (*((*self_0).step_offsets.contents).offset(j_1 as isize)).byte_offset;
                 all_patterns_are_valid = 0 as libc::c_int != 0;
@@ -3127,6 +3234,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         },
                     );
                     j_2 = j_2.wrapping_add(1);
+                    j_2;
                 }
                 analysis.did_abort = 0 as libc::c_int != 0;
                 ts_query__perform_analysis(self_0, &mut subgraphs, &mut analysis);
@@ -3146,24 +3254,38 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             (*step_1).set_root_pattern_guaranteed(0 as libc::c_int != 0);
                         }
                         j_3 = j_3.wrapping_add(1);
+                        j_3;
                     }
-                } else if analysis.finished_parent_symbols.size == 0 as libc::c_int as libc::c_uint
-                {
-                    if analysis.final_step_indices.size > 0 as libc::c_int as libc::c_uint {
+                } else if analysis.finished_parent_symbols.size == 0 as libc::c_int as uint32_t {
+                    if analysis.final_step_indices.size > 0 as libc::c_int as uint32_t {
                     } else {
                         panic!();
                     }
-                    if (analysis.final_step_indices.size)
-                        .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                    'c_8365: {
+                        if analysis.final_step_indices.size > 0 as libc::c_int as uint32_t {
+                        } else {
+                            panic!();
+                        }
+                    };
+                    if (analysis.final_step_indices.size).wrapping_sub(1 as libc::c_int as uint32_t)
                         < analysis.final_step_indices.size
                     {
                     } else {
                         panic!();
                     }
+                    'c_8178: {
+                        if (analysis.final_step_indices.size)
+                            .wrapping_sub(1 as libc::c_int as uint32_t)
+                            < analysis.final_step_indices.size
+                        {
+                        } else {
+                            panic!();
+                        }
+                    };
                     let mut impossible_step_index: uint16_t =
                         *(&mut *(analysis.final_step_indices.contents).offset(
                             (analysis.final_step_indices.size)
-                                .wrapping_sub(1 as libc::c_int as libc::c_uint)
+                                .wrapping_sub(1 as libc::c_int as uint32_t)
                                 as isize,
                         ) as *mut uint16_t);
                     let mut j_4: uint32_t = 0;
@@ -3171,11 +3293,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                     j_4 = 0 as libc::c_int as uint32_t;
                     impossible_exists = 0 as libc::c_int as uint32_t;
                     let mut size_6: uint32_t = ((*self_0).step_offsets.size).wrapping_sub(j_4);
-                    if !(size_6 == 0 as libc::c_int as libc::c_uint) {
+                    if !(size_6 == 0 as libc::c_int as uint32_t) {
                         let mut comparison_6: libc::c_int = 0;
-                        while size_6 > 1 as libc::c_int as libc::c_uint {
-                            let mut half_size_6: uint32_t =
-                                size_6.wrapping_div(2 as libc::c_int as libc::c_uint);
+                        while size_6 > 1 as libc::c_int as uint32_t {
+                            let mut half_size_6: uint32_t = size_6 / 2 as libc::c_int as uint32_t;
                             let mut mid_index_6: uint32_t = j_4.wrapping_add(half_size_6);
                             comparison_6 = (*((*self_0).step_offsets.contents)
                                 .offset(mid_index_6 as isize))
@@ -3184,8 +3305,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             if comparison_6 <= 0 as libc::c_int {
                                 j_4 = mid_index_6;
                             }
-                            size_6 = (size_6 as libc::c_uint).wrapping_sub(half_size_6) as uint32_t
-                                as uint32_t;
+                            size_6 = size_6.wrapping_sub(half_size_6);
                         }
                         comparison_6 = (*((*self_0).step_offsets.contents).offset(j_4 as isize))
                             .step_index as libc::c_int
@@ -3193,14 +3313,12 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         if comparison_6 == 0 as libc::c_int {
                             impossible_exists = 1 as libc::c_int as uint32_t;
                         } else if comparison_6 < 0 as libc::c_int {
-                            j_4 = (j_4 as libc::c_uint)
-                                .wrapping_add(1 as libc::c_int as libc::c_uint)
-                                as uint32_t as uint32_t;
+                            j_4 = j_4.wrapping_add(1 as libc::c_int as uint32_t);
                         }
                     }
                     if j_4 >= (*self_0).step_offsets.size {
                         j_4 = ((*self_0).step_offsets.size)
-                            .wrapping_sub(1 as libc::c_int as libc::c_uint);
+                            .wrapping_sub(1 as libc::c_int as uint32_t);
                     }
                     *error_offset =
                         (*((*self_0).step_offsets.contents).offset(j_4 as isize)).byte_offset;
@@ -3223,11 +3341,13 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                             (*step_2).set_root_pattern_guaranteed(0 as libc::c_int != 0);
                         }
                         j_5 = j_5.wrapping_add(1);
+                        j_5;
                     }
                 }
             }
         }
         i_4 = i_4.wrapping_add(1);
+        i_4;
     }
     let mut predicate_capture_ids: C2RustUnnamed_17 = {
         let mut init = C2RustUnnamed_17 {
@@ -3258,11 +3378,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 _index_1 = 0 as libc::c_int as libc::c_uint;
                 _exists_1 = 0 as libc::c_int as libc::c_uint;
                 let mut size_7: uint32_t = (predicate_capture_ids.size).wrapping_sub(_index_1);
-                if !(size_7 == 0 as libc::c_int as libc::c_uint) {
+                if !(size_7 == 0 as libc::c_int as uint32_t) {
                     let mut comparison_7: libc::c_int = 0;
-                    while size_7 > 1 as libc::c_int as libc::c_uint {
-                        let mut half_size_7: uint32_t =
-                            size_7.wrapping_div(2 as libc::c_int as libc::c_uint);
+                    while size_7 > 1 as libc::c_int as uint32_t {
+                        let mut half_size_7: uint32_t = size_7 / 2 as libc::c_int as uint32_t;
                         let mut mid_index_7: uint32_t = _index_1.wrapping_add(half_size_7);
                         comparison_7 = *(predicate_capture_ids.contents)
                             .offset(mid_index_7 as isize)
@@ -3271,8 +3390,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         if comparison_7 <= 0 as libc::c_int {
                             _index_1 = mid_index_7;
                         }
-                        size_7 = (size_7 as libc::c_uint).wrapping_sub(half_size_7) as uint32_t
-                            as uint32_t;
+                        size_7 = size_7.wrapping_sub(half_size_7);
                     }
                     comparison_7 = *(predicate_capture_ids.contents).offset(_index_1 as isize)
                         as libc::c_int
@@ -3295,6 +3413,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 }
             }
             j_6 = j_6.wrapping_add(1);
+            j_6;
         }
         let mut start_0: libc::c_uint = (*pattern_0).steps.offset;
         let mut end_0: libc::c_uint = start_0.wrapping_add((*pattern_0).steps.length);
@@ -3313,11 +3432,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 index_0 = 0 as libc::c_int as libc::c_uint;
                 exists_2 = 0 as libc::c_int as libc::c_uint;
                 let mut size_8: uint32_t = (predicate_capture_ids.size).wrapping_sub(index_0);
-                if !(size_8 == 0 as libc::c_int as libc::c_uint) {
+                if !(size_8 == 0 as libc::c_int as uint32_t) {
                     let mut comparison_8: libc::c_int = 0;
-                    while size_8 > 1 as libc::c_int as libc::c_uint {
-                        let mut half_size_8: uint32_t =
-                            size_8.wrapping_div(2 as libc::c_int as libc::c_uint);
+                    while size_8 > 1 as libc::c_int as uint32_t {
+                        let mut half_size_8: uint32_t = size_8 / 2 as libc::c_int as uint32_t;
                         let mut mid_index_8: uint32_t = index_0.wrapping_add(half_size_8);
                         comparison_8 = *(predicate_capture_ids.contents)
                             .offset(mid_index_8 as isize)
@@ -3326,8 +3444,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         if comparison_8 <= 0 as libc::c_int {
                             index_0 = mid_index_8;
                         }
-                        size_8 = (size_8 as libc::c_uint).wrapping_sub(half_size_8) as uint32_t
-                            as uint32_t;
+                        size_8 = size_8.wrapping_sub(half_size_8);
                     }
                     comparison_8 = *(predicate_capture_ids.contents).offset(index_0 as isize)
                         as libc::c_int
@@ -3343,17 +3460,20 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                     break;
                 } else {
                     k = k.wrapping_add(1);
+                    k;
                 }
             }
             j_7 = j_7.wrapping_add(1);
+            j_7;
         }
         i_5 = i_5.wrapping_add(1);
+        i_5;
     }
-    let mut done: bool = (*self_0).steps.size == 0 as libc::c_int as libc::c_uint;
+    let mut done: bool = (*self_0).steps.size == 0 as libc::c_int as uint32_t;
     while !done {
         done = 1 as libc::c_int != 0;
         let mut i_6: libc::c_uint =
-            ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as libc::c_uint);
+            ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as uint32_t);
         while i_6 > 0 as libc::c_int as libc::c_uint {
             let mut step_5: *mut QueryStep =
                 &mut *((*self_0).steps.contents).offset(i_6 as isize) as *mut QueryStep;
@@ -3388,6 +3508,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 }
             }
             i_6 = i_6.wrapping_sub(1);
+            i_6;
         }
     }
     analysis.did_abort = 0 as libc::c_int != 0;
@@ -3479,12 +3600,14 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                         },
                     );
                     k_0 = k_0.wrapping_add(1);
+                    k_0;
                 }
             }
             j_8 = j_8.wrapping_add(1);
+            j_8;
         }
         ts_query__perform_analysis(self_0, &mut subgraphs, &mut analysis);
-        if analysis.finished_parent_symbols.size > 0 as libc::c_int as libc::c_uint {
+        if analysis.finished_parent_symbols.size > 0 as libc::c_int as uint32_t {
             (*((*self_0).patterns.contents).offset((*pattern_entry).pattern_index as isize))
                 .is_non_local = 1 as libc::c_int != 0;
         }
@@ -3498,11 +3621,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
             _exists_2 = 0 as libc::c_int as libc::c_uint;
             let mut size_9: uint32_t =
                 ((*self_0).repeat_symbols_with_rootless_patterns.size).wrapping_sub(_index_2);
-            if !(size_9 == 0 as libc::c_int as libc::c_uint) {
+            if !(size_9 == 0 as libc::c_int as uint32_t) {
                 let mut comparison_9: libc::c_int = 0;
-                while size_9 > 1 as libc::c_int as libc::c_uint {
-                    let mut half_size_9: uint32_t =
-                        size_9.wrapping_div(2 as libc::c_int as libc::c_uint);
+                while size_9 > 1 as libc::c_int as uint32_t {
+                    let mut half_size_9: uint32_t = size_9 / 2 as libc::c_int as uint32_t;
                     let mut mid_index_9: uint32_t = _index_2.wrapping_add(half_size_9);
                     comparison_9 = *((*self_0).repeat_symbols_with_rootless_patterns.contents)
                         .offset(mid_index_9 as isize)
@@ -3511,8 +3633,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                     if comparison_9 <= 0 as libc::c_int {
                         _index_2 = mid_index_9;
                     }
-                    size_9 =
-                        (size_9 as libc::c_uint).wrapping_sub(half_size_9) as uint32_t as uint32_t;
+                    size_9 = size_9.wrapping_sub(half_size_9);
                 }
                 comparison_9 = *((*self_0).repeat_symbols_with_rootless_patterns.contents)
                     .offset(_index_2 as isize) as libc::c_int
@@ -3535,8 +3656,10 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 );
             }
             k_1 = k_1.wrapping_add(1);
+            k_1;
         }
         i_7 = i_7.wrapping_add(1);
+        i_7;
     }
     let mut i_8: libc::c_uint = 0 as libc::c_int as libc::c_uint;
     while i_8 < subgraphs.size {
@@ -3549,6 +3672,7 @@ unsafe extern "C" fn ts_query__analyze_patterns(
                 as *mut Array,
         );
         i_8 = i_8.wrapping_add(1);
+        i_8;
     }
     _array__delete(&mut subgraphs as *mut AnalysisSubgraphArray as *mut Array);
     query_analysis__delete(&mut analysis);
@@ -3589,11 +3713,13 @@ unsafe extern "C" fn ts_query__add_negated_fields(
             && !failed_match
         {
             match_count = match_count.wrapping_add(1);
+            match_count;
         } else {
             match_count = 0 as libc::c_int as libc::c_uint;
             failed_match = 1 as libc::c_int != 0;
         }
         i = i.wrapping_add(1);
+        i;
     }
     (*step).negated_field_list_id = (*self_0).negated_fields.size as uint16_t;
     _array__splice(
@@ -3707,11 +3833,9 @@ unsafe extern "C" fn ts_query__parse_string_literal(
             );
             stream_advance(stream);
             return TSQueryErrorNone;
-        } else {
-            if (*stream).next == '\n' as i32 {
-                stream_reset(stream, string_start);
-                return TSQueryErrorSyntax;
-            }
+        } else if (*stream).next == '\n' as i32 {
+            stream_reset(stream, string_start);
+            return TSQueryErrorSyntax;
         }
         if !stream_advance(stream) {
             stream_reset(stream, string_start);
@@ -3866,17 +3990,25 @@ unsafe extern "C" fn ts_query__parse_pattern(
         return PARENT_DONE;
     }
     let starting_step_index: uint32_t = (*self_0).steps.size;
-    if (*self_0).step_offsets.size == 0 as libc::c_int as libc::c_uint || {
-        if ((*self_0).step_offsets.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
+    if (*self_0).step_offsets.size == 0 as libc::c_int as uint32_t || {
+        if ((*self_0).step_offsets.size).wrapping_sub(1 as libc::c_int as uint32_t)
             < (*self_0).step_offsets.size
         {
         } else {
             panic!();
         }
+        'c_18511: {
+            if ((*self_0).step_offsets.size).wrapping_sub(1 as libc::c_int as uint32_t)
+                < (*self_0).step_offsets.size
+            {
+            } else {
+                panic!();
+            }
+        };
         (*(&mut *((*self_0).step_offsets.contents).offset(
-            ((*self_0).step_offsets.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize,
+            ((*self_0).step_offsets.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize,
         ) as *mut StepOffset))
-            .step_index as libc::c_uint
+            .step_index as uint32_t
             != starting_step_index
     } {
         _array__grow(
@@ -3917,7 +4049,7 @@ unsafe extern "C" fn ts_query__parse_pattern(
             );
             if e as libc::c_uint == PARENT_DONE as libc::c_uint {
                 if (*stream).next == ']' as i32
-                    && branch_step_indices.size > 0 as libc::c_int as libc::c_uint
+                    && branch_step_indices.size > 0 as libc::c_int as uint32_t
                 {
                     stream_advance(stream);
                     break;
@@ -3959,19 +4091,20 @@ unsafe extern "C" fn ts_query__parse_pattern(
         }
         (*self_0).steps.size = ((*self_0).steps.size).wrapping_sub(1);
         let mut i: libc::c_uint = 0 as libc::c_int as libc::c_uint;
-        while i < (branch_step_indices.size).wrapping_sub(1 as libc::c_int as libc::c_uint) {
+        while i < (branch_step_indices.size).wrapping_sub(1 as libc::c_int as uint32_t) {
             let mut step_index: uint32_t = *(branch_step_indices.contents).offset(i as isize);
             let mut next_step_index: uint32_t = *(branch_step_indices.contents)
                 .offset(i.wrapping_add(1 as libc::c_int as libc::c_uint) as isize);
             let mut start_step: *mut QueryStep =
                 &mut *((*self_0).steps.contents).offset(step_index as isize) as *mut QueryStep;
             let mut end_step: *mut QueryStep = &mut *((*self_0).steps.contents)
-                .offset(next_step_index.wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+                .offset(next_step_index.wrapping_sub(1 as libc::c_int as uint32_t) as isize)
                 as *mut QueryStep;
             (*start_step).alternative_index = next_step_index as uint16_t;
             (*end_step).alternative_index = (*self_0).steps.size as uint16_t;
             (*end_step).set_is_dead_end(1 as libc::c_int != 0);
             i = i.wrapping_add(1);
+            i;
         }
         capture_quantifiers_delete(&mut branch_capture_quantifiers);
         _array__delete(&mut branch_step_indices as *mut C2RustUnnamed_25 as *mut Array);
@@ -4024,7 +4157,7 @@ unsafe extern "C" fn ts_query__parse_pattern(
                 stream_scan_identifier(stream);
                 let mut length: uint32_t =
                     ((*stream).input).offset_from(node_name) as libc::c_long as uint32_t;
-                if length == 1 as libc::c_int as libc::c_uint
+                if length == 1 as libc::c_int as uint32_t
                     && *node_name.offset(0 as libc::c_int as isize) as libc::c_int == '_' as i32
                 {
                     symbol = WILDCARD_SYMBOL;
@@ -4052,15 +4185,23 @@ unsafe extern "C" fn ts_query__parse_pattern(
             (*self_0).steps.size = ((*self_0).steps.size).wrapping_add(1);
             *((*self_0).steps.contents).offset(fresh28 as isize) =
                 query_step__new(symbol, depth as uint16_t, is_immediate);
-            if ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
+            if ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as uint32_t)
                 < (*self_0).steps.size
             {
             } else {
                 panic!();
             }
-            let mut step: *mut QueryStep = &mut *((*self_0).steps.contents).offset(
-                ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize,
-            ) as *mut QueryStep;
+            'c_16648: {
+                if ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as uint32_t)
+                    < (*self_0).steps.size
+                {
+                } else {
+                    panic!();
+                }
+            };
+            let mut step: *mut QueryStep = &mut *((*self_0).steps.contents)
+                .offset(((*self_0).steps.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
+                as *mut QueryStep;
             if (ts_language_symbol_metadata((*self_0).language, symbol)).supertype {
                 (*step).supertype_symbol = (*step).symbol;
                 (*step).symbol = WILDCARD_SYMBOL;
@@ -4118,6 +4259,7 @@ unsafe extern "C" fn ts_query__parse_pattern(
                     if (negated_field_count as libc::c_int) < 8 as libc::c_int {
                         negated_field_ids[negated_field_count as usize] = field_id;
                         negated_field_count = negated_field_count.wrapping_add(1);
+                        negated_field_count;
                     }
                 } else {
                     if (*stream).next == '.' as i32 {
@@ -4129,7 +4271,7 @@ unsafe extern "C" fn ts_query__parse_pattern(
                     let mut e_1: TSQueryError = ts_query__parse_pattern(
                         self_0,
                         stream,
-                        depth.wrapping_add(1 as libc::c_int as libc::c_uint),
+                        depth.wrapping_add(1 as libc::c_int as uint32_t),
                         child_is_immediate_0,
                         &mut child_capture_quantifiers_0,
                     );
@@ -4249,8 +4391,8 @@ unsafe extern "C" fn ts_query__parse_pattern(
         loop {
             (*step_0).field = field_id_0;
             if !((*step_0).alternative_index as libc::c_int != NONE as libc::c_int
-                && (*step_0).alternative_index as libc::c_uint > step_index_1
-                && ((*step_0).alternative_index as libc::c_uint) < (*self_0).steps.size)
+                && (*step_0).alternative_index as uint32_t > step_index_1
+                && ((*step_0).alternative_index as uint32_t) < (*self_0).steps.size)
             {
                 break;
             }
@@ -4304,8 +4446,8 @@ unsafe extern "C" fn ts_query__parse_pattern(
                 .offset(starting_step_index as isize)
                 as *mut QueryStep;
             while (*step_1).alternative_index as libc::c_int != NONE as libc::c_int
-                && ((*step_1).alternative_index as libc::c_uint)
-                    < ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
+                && ((*step_1).alternative_index as uint32_t)
+                    < ((*self_0).steps.size).wrapping_sub(1 as libc::c_int as uint32_t)
             {
                 step_1 = &mut *((*self_0).steps.contents)
                     .offset((*step_1).alternative_index as isize)
@@ -4320,7 +4462,7 @@ unsafe extern "C" fn ts_query__parse_pattern(
                 .offset(starting_step_index as isize)
                 as *mut QueryStep;
             while (*step_2).alternative_index as libc::c_int != NONE as libc::c_int
-                && ((*step_2).alternative_index as libc::c_uint) < (*self_0).steps.size
+                && ((*step_2).alternative_index as uint32_t) < (*self_0).steps.size
             {
                 step_2 = &mut *((*self_0).steps.contents)
                     .offset((*step_2).alternative_index as isize)
@@ -4350,8 +4492,8 @@ unsafe extern "C" fn ts_query__parse_pattern(
                     as *mut QueryStep;
                 query_step__add_capture(step_3, capture_id);
                 if !((*step_3).alternative_index as libc::c_int != NONE as libc::c_int
-                    && (*step_3).alternative_index as libc::c_uint > step_index_2
-                    && ((*step_3).alternative_index as libc::c_uint) < (*self_0).steps.size)
+                    && (*step_3).alternative_index as uint32_t > step_index_2
+                    && ((*step_3).alternative_index as uint32_t) < (*self_0).steps.size)
                 {
                     break;
                 }
@@ -4371,8 +4513,8 @@ pub unsafe extern "C" fn ts_query_new(
     mut error_type: *mut TSQueryError,
 ) -> *mut TSQuery {
     if language.is_null()
-        || (*language).version > 14 as libc::c_int as libc::c_uint
-        || (*language).version < 13 as libc::c_int as libc::c_uint
+        || (*language).version > 14 as libc::c_int as uint32_t
+        || (*language).version < 13 as libc::c_int as uint32_t
     {
         *error_type = TSQueryErrorLanguage;
         return 0 as *mut TSQuery;
@@ -4523,15 +4665,23 @@ pub unsafe extern "C" fn ts_query_new(
             PATTERN_DONE_MARKER,
             0 as libc::c_int != 0,
         );
-        if ((*self_0).patterns.size).wrapping_sub(1 as libc::c_int as libc::c_uint)
+        if ((*self_0).patterns.size).wrapping_sub(1 as libc::c_int as uint32_t)
             < (*self_0).patterns.size
         {
         } else {
             panic!();
         }
-        let mut pattern: *mut QueryPattern = &mut *((*self_0).patterns.contents).offset(
-            ((*self_0).patterns.size).wrapping_sub(1 as libc::c_int as libc::c_uint) as isize,
-        ) as *mut QueryPattern;
+        'c_12764: {
+            if ((*self_0).patterns.size).wrapping_sub(1 as libc::c_int as uint32_t)
+                < (*self_0).patterns.size
+            {
+            } else {
+                panic!();
+            }
+        };
+        let mut pattern: *mut QueryPattern = &mut *((*self_0).patterns.contents)
+            .offset(((*self_0).patterns.size).wrapping_sub(1 as libc::c_int as uint32_t) as isize)
+            as *mut QueryPattern;
         (*pattern).steps.length = ((*self_0).steps.size).wrapping_sub(start_step_index);
         (*pattern).predicate_steps.length =
             ((*self_0).predicate_steps.size).wrapping_sub(start_predicate_step_index);
@@ -4561,34 +4711,33 @@ pub unsafe extern "C" fn ts_query_new(
                 && (*step).depth as libc::c_int == 0 as libc::c_int
                 && (*step).field == 0
             {
-                let mut second_step: *mut QueryStep = &mut *((*self_0).steps.contents).offset(
-                    start_step_index.wrapping_add(1 as libc::c_int as libc::c_uint) as isize,
-                ) as *mut QueryStep;
+                let mut second_step: *mut QueryStep = &mut *((*self_0).steps.contents)
+                    .offset(start_step_index.wrapping_add(1 as libc::c_int as uint32_t) as isize)
+                    as *mut QueryStep;
                 if (*second_step).symbol as libc::c_int != WILDCARD_SYMBOL as libc::c_int
                     && (*second_step).depth as libc::c_int == 1 as libc::c_int
                 {
                     wildcard_root_alternative_index = (*step).alternative_index;
-                    start_step_index = (start_step_index as libc::c_uint)
-                        .wrapping_add(1 as libc::c_int as libc::c_uint)
-                        as uint32_t as uint32_t;
+                    start_step_index = start_step_index.wrapping_add(1 as libc::c_int as uint32_t);
                     step = second_step;
                 }
             }
             let mut start_depth: uint32_t = (*step).depth as uint32_t;
-            let mut is_rooted: bool = start_depth == 0 as libc::c_int as libc::c_uint;
+            let mut is_rooted: bool = start_depth == 0 as libc::c_int as uint32_t;
             let mut step_index: uint32_t =
-                start_step_index.wrapping_add(1 as libc::c_int as libc::c_uint);
+                start_step_index.wrapping_add(1 as libc::c_int as uint32_t);
             while step_index < (*self_0).steps.size {
                 let mut child_step: *mut QueryStep =
                     &mut *((*self_0).steps.contents).offset(step_index as isize) as *mut QueryStep;
                 if (*child_step).is_dead_end() {
                     break;
                 }
-                if (*child_step).depth as libc::c_uint == start_depth {
+                if (*child_step).depth as uint32_t == start_depth {
                     is_rooted = 0 as libc::c_int != 0;
                     break;
                 } else {
                     step_index = step_index.wrapping_add(1);
+                    step_index;
                 }
             }
             ts_query__pattern_map_insert(self_0, (*step).symbol, {
@@ -4602,6 +4751,7 @@ pub unsafe extern "C" fn ts_query_new(
             if (*step).symbol as libc::c_int == WILDCARD_SYMBOL as libc::c_int {
                 (*self_0).wildcard_root_pattern_count =
                     ((*self_0).wildcard_root_pattern_count).wrapping_add(1);
+                (*self_0).wildcard_root_pattern_count;
             }
             if (*step).alternative_index as libc::c_int != NONE as libc::c_int {
                 start_step_index = (*step).alternative_index as uint32_t;
@@ -4645,11 +4795,18 @@ pub unsafe extern "C" fn ts_query_delete(mut self_0: *mut TSQuery) {
             } else {
                 panic!();
             }
+            'c_2200: {
+                if index < (*self_0).capture_quantifiers.size {
+                } else {
+                    panic!();
+                }
+            };
             let mut capture_quantifiers: *mut CaptureQuantifiers =
                 &mut *((*self_0).capture_quantifiers.contents).offset(index as isize)
                     as *mut CaptureQuantifiers;
             capture_quantifiers_delete(capture_quantifiers);
             index = index.wrapping_add(1);
+            index;
         }
         _array__delete(&mut (*self_0).capture_quantifiers as *mut C2RustUnnamed_11 as *mut Array);
         crate::core::alloc::ts_free(self_0 as *mut libc::c_void);
@@ -4685,6 +4842,12 @@ pub unsafe extern "C" fn ts_query_capture_quantifier_for_id(
     } else {
         panic!();
     }
+    'c_19284: {
+        if pattern_index < (*self_0).capture_quantifiers.size {
+        } else {
+            panic!();
+        }
+    };
     let mut capture_quantifiers: *mut CaptureQuantifiers =
         &mut *((*self_0).capture_quantifiers.contents).offset(pattern_index as isize)
             as *mut CaptureQuantifiers;
@@ -4729,12 +4892,13 @@ pub unsafe extern "C" fn ts_query_is_pattern_rooted(
     while i < (*self_0).pattern_map.size {
         let mut entry: *mut PatternEntry =
             &mut *((*self_0).pattern_map.contents).offset(i as isize) as *mut PatternEntry;
-        if (*entry).pattern_index as libc::c_uint == pattern_index {
+        if (*entry).pattern_index as uint32_t == pattern_index {
             if !(*entry).is_rooted {
                 return 0 as libc::c_int != 0;
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return 1 as libc::c_int != 0;
 }
@@ -4764,6 +4928,7 @@ pub unsafe extern "C" fn ts_query_is_pattern_guaranteed_at_step(
         }
         step_index = (*step_offset).step_index as uint32_t;
         i = i.wrapping_add(1);
+        i;
     }
     if step_index < (*self_0).steps.size {
         return (*((*self_0).steps.contents).offset(step_index as isize)).root_pattern_guaranteed();
@@ -4776,12 +4941,18 @@ pub unsafe extern "C" fn ts_query__step_is_fallible(
     mut self_0: *const TSQuery,
     mut step_index: uint16_t,
 ) -> bool {
-    if (step_index as uint32_t).wrapping_add(1 as libc::c_int as libc::c_uint)
-        < (*self_0).steps.size
-    {
+    if (step_index as uint32_t).wrapping_add(1 as libc::c_int as uint32_t) < (*self_0).steps.size {
     } else {
         panic!();
     }
+    'c_23580: {
+        if (step_index as uint32_t).wrapping_add(1 as libc::c_int as uint32_t)
+            < (*self_0).steps.size
+        {
+        } else {
+            panic!();
+        }
+    };
     let mut step: *mut QueryStep =
         &mut *((*self_0).steps.contents).offset(step_index as isize) as *mut QueryStep;
     let mut next_step: *mut QueryStep = &mut *((*self_0).steps.contents)
@@ -4805,6 +4976,7 @@ pub unsafe extern "C" fn ts_query_disable_capture(
                 &mut *((*self_0).steps.contents).offset(i as isize) as *mut QueryStep;
             query_step__remove_capture(step, id as uint16_t);
             i = i.wrapping_add(1);
+            i;
         }
     }
 }
@@ -4817,15 +4989,17 @@ pub unsafe extern "C" fn ts_query_disable_pattern(
     while i < (*self_0).pattern_map.size {
         let mut pattern: *mut PatternEntry =
             &mut *((*self_0).pattern_map.contents).offset(i as isize) as *mut PatternEntry;
-        if (*pattern).pattern_index as libc::c_uint == pattern_index {
+        if (*pattern).pattern_index as uint32_t == pattern_index {
             _array__erase(
                 &mut (*self_0).pattern_map as *mut C2RustUnnamed_9 as *mut Array,
                 ::core::mem::size_of::<PatternEntry>() as libc::c_ulong,
                 i,
             );
             i = i.wrapping_sub(1);
+            i;
         }
         i = i.wrapping_add(1);
+        i;
     }
 }
 #[no_mangle]
@@ -4942,6 +5116,7 @@ pub unsafe extern "C" fn ts_query_cursor_exec(
             (*step).field != 0;
             (*step).alternative_index as libc::c_int != NONE as libc::c_int;
             i = i.wrapping_add(1);
+            i;
         }
     }
     (*self_0).states.size = 0 as libc::c_int as uint32_t;
@@ -4962,7 +5137,7 @@ pub unsafe extern "C" fn ts_query_cursor_set_byte_range(
     mut start_byte: uint32_t,
     mut end_byte: uint32_t,
 ) {
-    if end_byte == 0 as libc::c_int as libc::c_uint {
+    if end_byte == 0 as libc::c_int as uint32_t {
         end_byte = 4294967295 as libc::c_uint;
     }
     (*self_0).start_byte = start_byte;
@@ -4974,8 +5149,8 @@ pub unsafe extern "C" fn ts_query_cursor_set_point_range(
     mut start_point: TSPoint,
     mut end_point: TSPoint,
 ) {
-    if end_point.row == 0 as libc::c_int as libc::c_uint
-        && end_point.column == 0 as libc::c_int as libc::c_uint
+    if end_point.row == 0 as libc::c_int as uint32_t
+        && end_point.column == 0 as libc::c_int as uint32_t
     {
         end_point = {
             let mut init = TSPoint {
@@ -5009,7 +5184,7 @@ unsafe extern "C" fn ts_query_cursor__first_in_progress_capture(
                 &mut (*self_0).capture_list_pool,
                 (*state).capture_list_id as uint16_t,
             );
-            if !((*state).consumed_capture_count() as libc::c_uint >= (*captures).size) {
+            if !((*state).consumed_capture_count() as uint32_t >= (*captures).size) {
                 let mut node: TSNode = (*((*captures).contents)
                     .offset((*state).consumed_capture_count() as isize))
                 .node;
@@ -5017,13 +5192,15 @@ unsafe extern "C" fn ts_query_cursor__first_in_progress_capture(
                     || point_lte(ts_node_end_point(node), (*self_0).start_point) as libc::c_int != 0
                 {
                     (*state).set_consumed_capture_count((*state).consumed_capture_count() + 1);
+                    (*state).consumed_capture_count();
                     i = i.wrapping_sub(1);
+                    i;
                 } else {
                     let mut node_start_byte: uint32_t = ts_node_start_byte(node);
                     if !result
                         || node_start_byte < *byte_offset
                         || node_start_byte == *byte_offset
-                            && ((*state).pattern_index as libc::c_uint) < *pattern_index
+                            && ((*state).pattern_index as uint32_t) < *pattern_index
                     {
                         let mut step: *mut QueryStep = &mut *((*(*self_0).query).steps.contents)
                             .offset((*state).step_index as isize)
@@ -5050,6 +5227,7 @@ unsafe extern "C" fn ts_query_cursor__first_in_progress_capture(
             }
         }
         i = i.wrapping_add(1);
+        i;
     }
     return result;
 }
@@ -5107,22 +5285,28 @@ pub unsafe extern "C" fn ts_query_cursor__compare_captures(
                     &mut *((*right_captures).contents).offset(j as isize) as *mut TSQueryCapture;
                 if (*left).node.id == (*right).node.id && (*left).index == (*right).index {
                     i = i.wrapping_add(1);
+                    i;
                     j = j.wrapping_add(1);
+                    j;
                 } else {
                     match ts_query_cursor__compare_nodes((*left).node, (*right).node) {
                         -1 => {
                             *right_contains_left = 0 as libc::c_int != 0;
                             i = i.wrapping_add(1);
+                            i;
                         }
                         1 => {
                             *left_contains_right = 0 as libc::c_int != 0;
                             j = j.wrapping_add(1);
+                            j;
                         }
                         _ => {
                             *right_contains_left = 0 as libc::c_int != 0;
                             *left_contains_right = 0 as libc::c_int != 0;
                             i = i.wrapping_add(1);
+                            i;
                             j = j.wrapping_add(1);
+                            j;
                         }
                     }
                 }
@@ -5145,16 +5329,16 @@ unsafe extern "C" fn ts_query_cursor__add_state(
     let mut step: *mut QueryStep = &mut *((*(*self_0).query).steps.contents)
         .offset((*pattern).step_index as isize)
         as *mut QueryStep;
-    let mut start_depth: uint32_t = ((*self_0).depth).wrapping_sub((*step).depth as libc::c_uint);
+    let mut start_depth: uint32_t = ((*self_0).depth).wrapping_sub((*step).depth as uint32_t);
     let mut index: uint32_t = (*self_0).states.size;
-    while index > 0 as libc::c_int as libc::c_uint {
+    while index > 0 as libc::c_int as uint32_t {
         let mut prev_state: *mut QueryState = &mut *((*self_0).states.contents)
-            .offset(index.wrapping_sub(1 as libc::c_int as libc::c_uint) as isize)
+            .offset(index.wrapping_sub(1 as libc::c_int as uint32_t) as isize)
             as *mut QueryState;
-        if ((*prev_state).start_depth as libc::c_uint) < start_depth {
+        if ((*prev_state).start_depth as uint32_t) < start_depth {
             break;
         }
-        if (*prev_state).start_depth as libc::c_uint == start_depth {
+        if (*prev_state).start_depth as uint32_t == start_depth {
             if (*prev_state).pattern_index as libc::c_int == (*pattern).pattern_index as libc::c_int
                 && (*prev_state).step_index as libc::c_int == (*pattern).step_index as libc::c_int
             {
@@ -5166,6 +5350,7 @@ unsafe extern "C" fn ts_query_cursor__add_state(
             }
         }
         index = index.wrapping_sub(1);
+        index;
     }
     _array__splice(
         &mut (*self_0).states as *mut C2RustUnnamed_16 as *mut Array,
@@ -5189,10 +5374,10 @@ unsafe extern "C" fn ts_query_cursor__prepare_to_capture(
     mut state: *mut QueryState,
     mut state_index_to_preserve: libc::c_uint,
 ) -> *mut CaptureList {
-    if (*state).capture_list_id == NONE as libc::c_uint {
+    if (*state).capture_list_id == NONE as uint32_t {
         (*state).capture_list_id =
             capture_list_pool_acquire(&mut (*self_0).capture_list_pool) as uint32_t;
-        if (*state).capture_list_id == NONE as libc::c_uint {
+        if (*state).capture_list_id == NONE as uint32_t {
             (*self_0).did_exceed_match_limit = 1 as libc::c_int != 0;
             let mut state_index: uint32_t = 0;
             let mut byte_offset: uint32_t = 0;
@@ -5265,6 +5450,7 @@ unsafe extern "C" fn ts_query_cursor__capture(
             init
         };
         j = j.wrapping_add(1);
+        j;
     }
 }
 unsafe extern "C" fn ts_query_cursor__copy_state(
@@ -5276,7 +5462,7 @@ unsafe extern "C" fn ts_query_cursor__copy_state(
         state.offset_from((*self_0).states.contents) as libc::c_long as uint32_t;
     let mut copy: QueryState = *state;
     copy.capture_list_id = NONE as uint32_t;
-    if (*state).capture_list_id != NONE as libc::c_uint {
+    if (*state).capture_list_id != NONE as uint32_t {
         let mut new_captures: *mut CaptureList =
             ts_query_cursor__prepare_to_capture(self_0, &mut copy, state_index);
         if new_captures.is_null() {
@@ -5298,14 +5484,14 @@ unsafe extern "C" fn ts_query_cursor__copy_state(
     _array__splice(
         &mut (*self_0).states as *mut C2RustUnnamed_16 as *mut Array,
         ::core::mem::size_of::<QueryState>() as libc::c_ulong,
-        state_index.wrapping_add(1 as libc::c_int as libc::c_uint),
+        state_index.wrapping_add(1 as libc::c_int as uint32_t),
         0 as libc::c_int as uint32_t,
         1 as libc::c_int as uint32_t,
         &mut copy as *mut QueryState as *const libc::c_void,
     );
     *state_ref = &mut *((*self_0).states.contents).offset(state_index as isize) as *mut QueryState;
     return &mut *((*self_0).states.contents)
-        .offset(state_index.wrapping_add(1 as libc::c_int as libc::c_uint) as isize)
+        .offset(state_index.wrapping_add(1 as libc::c_int as uint32_t) as isize)
         as *mut QueryState;
 }
 #[inline]
@@ -5324,13 +5510,13 @@ unsafe extern "C" fn ts_query_cursor__should_descend(
             .offset((*state).step_index as isize)
             as *mut QueryStep;
         if (*next_step).depth as libc::c_int != PATTERN_DONE_MARKER as libc::c_int
-            && ((*state).start_depth as libc::c_int + (*next_step).depth as libc::c_int)
-                as libc::c_uint
+            && ((*state).start_depth as libc::c_int + (*next_step).depth as libc::c_int) as uint32_t
                 > (*self_0).depth
         {
             return 1 as libc::c_int != 0;
         }
         i = i.wrapping_add(1);
+        i;
     }
     if (*self_0).depth >= (*self_0).max_start_depth {
         return 0 as libc::c_int != 0;
@@ -5346,11 +5532,10 @@ unsafe extern "C" fn ts_query_cursor__should_descend(
                 .repeat_symbols_with_rootless_patterns
                 .size)
                 .wrapping_sub(index);
-            if !(size == 0 as libc::c_int as libc::c_uint) {
+            if !(size == 0 as libc::c_int as uint32_t) {
                 let mut comparison: libc::c_int = 0;
-                while size > 1 as libc::c_int as libc::c_uint {
-                    let mut half_size: uint32_t =
-                        size.wrapping_div(2 as libc::c_int as libc::c_uint);
+                while size > 1 as libc::c_int as uint32_t {
+                    let mut half_size: uint32_t = size / 2 as libc::c_int as uint32_t;
                     let mut mid_index: uint32_t = index.wrapping_add(half_size);
                     comparison = *((*(*self_0).query)
                         .repeat_symbols_with_rootless_patterns
@@ -5360,7 +5545,7 @@ unsafe extern "C" fn ts_query_cursor__should_descend(
                     if comparison <= 0 as libc::c_int {
                         index = mid_index;
                     }
-                    size = (size as libc::c_uint).wrapping_sub(half_size) as uint32_t as uint32_t;
+                    size = size.wrapping_sub(half_size);
                 }
                 comparison = *((*(*self_0).query)
                     .repeat_symbols_with_rootless_patterns
@@ -5370,8 +5555,7 @@ unsafe extern "C" fn ts_query_cursor__should_descend(
                 if comparison == 0 as libc::c_int {
                     exists = 1 as libc::c_int != 0;
                 } else if comparison < 0 as libc::c_int {
-                    index = (index as libc::c_uint).wrapping_add(1 as libc::c_int as libc::c_uint)
-                        as uint32_t as uint32_t;
+                    index = index.wrapping_add(1 as libc::c_int as uint32_t);
                 }
             }
             return exists;
@@ -5389,7 +5573,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
     let mut current_block_185: u64;
     loop {
         if (*self_0).halted {
-            while (*self_0).states.size > 0 as libc::c_int as libc::c_uint {
+            while (*self_0).states.size > 0 as libc::c_int as uint32_t {
                 (*self_0).states.size = ((*self_0).states.size).wrapping_sub(1);
                 let mut state: QueryState =
                     *((*self_0).states.contents).offset((*self_0).states.size as isize);
@@ -5414,8 +5598,8 @@ unsafe extern "C" fn ts_query_cursor__advance(
                         .offset((*state_0).step_index as isize)
                         as *mut QueryStep;
                     if (*step).depth as libc::c_int == PATTERN_DONE_MARKER as libc::c_int
-                        && ((*state_0).start_depth as libc::c_uint > (*self_0).depth
-                            || (*self_0).depth == 0 as libc::c_int as libc::c_uint)
+                        && ((*state_0).start_depth as uint32_t > (*self_0).depth
+                            || (*self_0).depth == 0 as libc::c_int as uint32_t)
                     {
                         _array__grow(
                             &mut (*self_0).finished_states as *mut C2RustUnnamed_15 as *mut Array,
@@ -5428,6 +5612,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                         *((*self_0).finished_states.contents).offset(fresh39 as isize) = *state_0;
                         did_match = 1 as libc::c_int != 0;
                         deleted_count = deleted_count.wrapping_add(1);
+                        deleted_count;
                     } else if (*step).depth as libc::c_int != PATTERN_DONE_MARKER as libc::c_int
                         && ((*state_0).start_depth as uint32_t)
                             .wrapping_add((*step).depth as uint32_t)
@@ -5438,20 +5623,21 @@ unsafe extern "C" fn ts_query_cursor__advance(
                             (*state_0).capture_list_id as uint16_t,
                         );
                         deleted_count = deleted_count.wrapping_add(1);
-                    } else if deleted_count > 0 as libc::c_int as libc::c_uint {
+                        deleted_count;
+                    } else if deleted_count > 0 as libc::c_int as uint32_t {
                         *((*self_0).states.contents)
                             .offset(i.wrapping_sub(deleted_count) as isize) = *state_0;
                     }
                     i = i.wrapping_add(1);
+                    i;
                 }
-                (*self_0).states.size = ((*self_0).states.size as libc::c_uint)
-                    .wrapping_sub(deleted_count) as uint32_t
-                    as uint32_t;
+                (*self_0).states.size = ((*self_0).states.size).wrapping_sub(deleted_count);
             }
             match ts_tree_cursor_goto_next_sibling_internal(&mut (*self_0).cursor) as libc::c_uint {
                 2 => {
                     if !(*self_0).on_visible_node {
                         (*self_0).depth = ((*self_0).depth).wrapping_add(1);
+                        (*self_0).depth;
                         (*self_0).on_visible_node = 1 as libc::c_int != 0;
                     }
                     (*self_0).ascending = 0 as libc::c_int != 0;
@@ -5459,6 +5645,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                 1 => {
                     if (*self_0).on_visible_node {
                         (*self_0).depth = ((*self_0).depth).wrapping_sub(1);
+                        (*self_0).depth;
                         (*self_0).on_visible_node = 0 as libc::c_int != 0;
                     }
                     (*self_0).ascending = 0 as libc::c_int != 0;
@@ -5466,6 +5653,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                 _ => {
                     if ts_tree_cursor_goto_parent(&mut (*self_0).cursor) {
                         (*self_0).depth = ((*self_0).depth).wrapping_sub(1);
+                        (*self_0).depth;
                     } else {
                         (*self_0).halted = 1 as libc::c_int != 0;
                     }
@@ -5528,7 +5716,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                             .offset((*pattern).step_index as isize)
                             as *mut QueryStep;
                         let mut start_depth: uint32_t =
-                            ((*self_0).depth).wrapping_sub((*step_0).depth as libc::c_uint);
+                            ((*self_0).depth).wrapping_sub((*step_0).depth as uint32_t);
                         if (if (*pattern).is_rooted as libc::c_int != 0 {
                             node_intersects_range as libc::c_int
                         } else {
@@ -5544,6 +5732,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                             ts_query_cursor__add_state(self_0, pattern);
                         }
                         i_0 = i_0.wrapping_add(1);
+                        i_0;
                     }
                 }
                 let mut i_1: libc::c_uint = 0;
@@ -5555,7 +5744,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                         .offset((*pattern_0).step_index as isize)
                         as *mut QueryStep;
                     let mut start_depth_0: uint32_t =
-                        ((*self_0).depth).wrapping_sub((*step_1).depth as libc::c_uint);
+                        ((*self_0).depth).wrapping_sub((*step_1).depth as uint32_t);
                     loop {
                         if (if (*pattern_0).is_rooted as libc::c_int != 0 {
                             node_intersects_range as libc::c_int
@@ -5570,6 +5759,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                             ts_query_cursor__add_state(self_0, pattern_0);
                         }
                         i_1 = i_1.wrapping_add(1);
+                        i_1;
                         if i_1 == (*(*self_0).query).pattern_map.size {
                             break;
                         }
@@ -5629,6 +5819,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                     break;
                                 } else {
                                     k = k.wrapping_add(1);
+                                    k;
                                 }
                             }
                             if !has_supertype {
@@ -5655,6 +5846,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                     break;
                                 }
                                 negated_field_ids = negated_field_ids.offset(1);
+                                negated_field_ids;
                                 if ((ts_node_child_by_field_id(node, negated_field_id)).id)
                                     .is_null()
                                 {
@@ -5676,6 +5868,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                     j,
                                 );
                                 j = j.wrapping_sub(1);
+                                j;
                             }
                         } else {
                             if later_sibling_can_match as libc::c_int != 0
@@ -5688,6 +5881,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                             {
                                 if !(ts_query_cursor__copy_state(self_0, &mut state_1)).is_null() {
                                     copy_count = copy_count.wrapping_add(1);
+                                    copy_count;
                                 }
                             }
                             if (*state_1).needs_parent() {
@@ -5700,6 +5894,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                     let mut skipped_wildcard_step: *mut QueryStep = step_2;
                                     loop {
                                         skipped_wildcard_step = skipped_wildcard_step.offset(-1);
+                                        skipped_wildcard_step;
                                         if !((*skipped_wildcard_step).is_dead_end() as libc::c_int
                                             != 0
                                             || (*skipped_wildcard_step).is_pass_through()
@@ -5737,8 +5932,10 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                     j,
                                 );
                                 j = j.wrapping_sub(1);
+                                j;
                             } else {
                                 (*state_1).step_index = ((*state_1).step_index).wrapping_add(1);
+                                (*state_1).step_index;
                                 (*state_1).set_seeking_immediate_match(0 as libc::c_int != 0);
                                 let mut next_step: *mut QueryStep =
                                     &mut *((*(*self_0).query).steps.contents)
@@ -5767,11 +5964,14 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                             (*child_state).step_index =
                                                 (*child_step).alternative_index;
                                             k_0 = k_0.wrapping_sub(1);
+                                            k_0;
                                         } else {
                                             if (*child_step).is_pass_through() {
                                                 (*child_state).step_index =
                                                     ((*child_state).step_index).wrapping_add(1);
+                                                (*child_state).step_index;
                                                 k_0 = k_0.wrapping_sub(1);
+                                                k_0;
                                             }
                                             let mut copy: *mut QueryState =
                                                 ts_query_cursor__copy_state(
@@ -5780,7 +5980,9 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                                 );
                                             if !copy.is_null() {
                                                 end_index = end_index.wrapping_add(1);
+                                                end_index;
                                                 copy_count = copy_count.wrapping_add(1);
+                                                copy_count;
                                                 (*copy).step_index =
                                                     (*child_step).alternative_index;
                                                 if (*child_step).alternative_is_immediate() {
@@ -5792,6 +5994,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                         }
                                     }
                                     k_0 = k_0.wrapping_add(1);
+                                    k_0;
                                 }
                             }
                         }
@@ -5809,6 +6012,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                             j_0,
                         );
                         j_0 = j_0.wrapping_sub(1);
+                        j_0;
                     } else {
                         let mut did_remove: bool = 0 as libc::c_int != 0;
                         let mut current_block_163: u64;
@@ -5849,6 +6053,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                         k_1,
                                     );
                                     k_1 = k_1.wrapping_sub(1);
+                                    k_1;
                                     current_block_163 = 9216188846964669005;
                                 } else {
                                     (*other_state)
@@ -5876,6 +6081,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                                 j_0,
                                             );
                                             j_0 = j_0.wrapping_sub(1);
+                                            j_0;
                                             did_remove = 1 as libc::c_int != 0;
                                             break;
                                         } else {
@@ -5888,6 +6094,7 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                 _ => {}
                             }
                             k_1 = k_1.wrapping_add(1);
+                            k_1;
                         }
                         if !did_remove {
                             let mut next_step_0: *mut QueryStep =
@@ -5919,11 +6126,13 @@ unsafe extern "C" fn ts_query_cursor__advance(
                                     );
                                     did_match = 1 as libc::c_int != 0;
                                     j_0 = j_0.wrapping_sub(1);
+                                    j_0;
                                 }
                             }
                         }
                     }
                     j_0 = j_0.wrapping_add(1);
+                    j_0;
                 }
             }
             if ts_query_cursor__should_descend(self_0, node_intersects_range) {
@@ -5931,28 +6140,30 @@ unsafe extern "C" fn ts_query_cursor__advance(
                     as libc::c_uint
                 {
                     2 => {
-                        current_block_185 = 12949440896214095851;
+                        current_block_185 = 5556306934380680898;
                         match current_block_185 {
-                            16114959784553087369 => {
+                            14735990014546659884 => {
                                 (*self_0).on_visible_node = 0 as libc::c_int != 0;
                                 continue;
                             }
                             _ => {
                                 (*self_0).depth = ((*self_0).depth).wrapping_add(1);
+                                (*self_0).depth;
                                 (*self_0).on_visible_node = 1 as libc::c_int != 0;
                                 continue;
                             }
                         }
                     }
                     1 => {
-                        current_block_185 = 16114959784553087369;
+                        current_block_185 = 14735990014546659884;
                         match current_block_185 {
-                            16114959784553087369 => {
+                            14735990014546659884 => {
                                 (*self_0).on_visible_node = 0 as libc::c_int != 0;
                                 continue;
                             }
                             _ => {
                                 (*self_0).depth = ((*self_0).depth).wrapping_add(1);
+                                (*self_0).depth;
                                 (*self_0).on_visible_node = 1 as libc::c_int != 0;
                                 continue;
                             }
@@ -5970,7 +6181,7 @@ pub unsafe extern "C" fn ts_query_cursor_next_match(
     mut self_0: *mut TSQueryCursor,
     mut match_0: *mut TSQueryMatch,
 ) -> bool {
-    if (*self_0).finished_states.size == 0 as libc::c_int as libc::c_uint {
+    if (*self_0).finished_states.size == 0 as libc::c_int as uint32_t {
         if !ts_query_cursor__advance(self_0, 0 as libc::c_int != 0) {
             return 0 as libc::c_int != 0;
         }
@@ -6023,6 +6234,7 @@ pub unsafe extern "C" fn ts_query_cursor_remove_match(
             return;
         }
         i = i.wrapping_add(1);
+        i;
     }
     let mut i_0: libc::c_uint = 0 as libc::c_int as libc::c_uint;
     while i_0 < (*self_0).states.size {
@@ -6041,6 +6253,7 @@ pub unsafe extern "C" fn ts_query_cursor_remove_match(
             return;
         }
         i_0 = i_0.wrapping_add(1);
+        i_0;
     }
 }
 #[no_mangle]
@@ -6072,7 +6285,7 @@ pub unsafe extern "C" fn ts_query_cursor_next_capture(
                 &mut (*self_0).capture_list_pool,
                 (*state).capture_list_id as uint16_t,
             );
-            if (*state).consumed_capture_count() as libc::c_uint >= (*captures).size {
+            if (*state).consumed_capture_count() as uint32_t >= (*captures).size {
                 capture_list_pool_release(
                     &mut (*self_0).capture_list_pool,
                     (*state).capture_list_id as uint16_t,
@@ -6096,18 +6309,19 @@ pub unsafe extern "C" fn ts_query_cursor_next_capture(
                     || node_follows_range as libc::c_int != 0;
                 if node_outside_of_range {
                     (*state).set_consumed_capture_count((*state).consumed_capture_count() + 1);
+                    (*state).consumed_capture_count();
                 } else {
                     let mut node_start_byte: uint32_t = ts_node_start_byte(node);
                     if node_start_byte < first_finished_capture_byte
                         || node_start_byte == first_finished_capture_byte
-                            && ((*state).pattern_index as libc::c_uint)
-                                < first_finished_pattern_index
+                            && ((*state).pattern_index as uint32_t) < first_finished_pattern_index
                     {
                         first_finished_state = state;
                         first_finished_capture_byte = node_start_byte;
                         first_finished_pattern_index = (*state).pattern_index as uint32_t;
                     }
                     i = i.wrapping_add(1);
+                    i;
                 }
             }
         }
@@ -6137,6 +6351,7 @@ pub unsafe extern "C" fn ts_query_cursor_next_capture(
             (*match_0).capture_count = (*captures_0).size as uint16_t;
             *capture_index = (*state_0).consumed_capture_count() as uint32_t;
             (*state_0).set_consumed_capture_count((*state_0).consumed_capture_count() + 1);
+            (*state_0).consumed_capture_count();
             return 1 as libc::c_int != 0;
         }
         if capture_list_pool_is_empty(&mut (*self_0).capture_list_pool) {
@@ -6152,7 +6367,7 @@ pub unsafe extern "C" fn ts_query_cursor_next_capture(
             );
         }
         if !ts_query_cursor__advance(self_0, 1 as libc::c_int != 0)
-            && (*self_0).finished_states.size == 0 as libc::c_int as libc::c_uint
+            && (*self_0).finished_states.size == 0 as libc::c_int as uint32_t
         {
             return 0 as libc::c_int != 0;
         }

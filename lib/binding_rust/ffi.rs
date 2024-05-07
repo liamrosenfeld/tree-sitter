@@ -2,10 +2,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 
-pub use crate::core::*;
-
 use std::{marker::PhantomData, mem::ManuallyDrop, ptr::NonNull, str};
 
+pub use crate::core::*;
 use crate::{
     Language, LookaheadIterator, Node, Parser, Query, QueryCursor, QueryError, Tree, TreeCursor,
 };

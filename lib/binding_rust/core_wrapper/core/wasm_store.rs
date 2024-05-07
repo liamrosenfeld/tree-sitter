@@ -1,6 +1,6 @@
-use crate::core::util::*;
-use crate::core::*;
 use std::os;
+
+use crate::core::{util::*, *};
 pub type __uint8_t = libc::c_uchar;
 pub type __int16_t = libc::c_short;
 pub type __uint16_t = libc::c_ushort;
